@@ -16,3 +16,4 @@ console.log('person2.name →', person2.name);
 var proto = Object.getPrototypeOf(person1);
 console.log('Object.getPrototypeOf(person1).name →', proto.name);
 console.log('proto === Person.prototype →', proto === Person.prototype);
+ 
