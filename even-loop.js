@@ -217,3 +217,30 @@ console.log(6);
 // 此时宏队列还有settimout 2 ，执行输出5
 
 // output：1，6，4，2，3，5
+
+
+
+
+// 题目6: 
+
+// settimout1
+setTimeout(() => {
+    console.log(1);
+}, 0);
+
+// promise1
+Promise.resolve().then(function loop() {
+
+    console.log(2);
+    // promise 2
+    Promise.resolve().then(loop);
+
+});
+
+// 同步任务 ： 
+// 微队列:  promise1
+// 宏队列  settimout1
+// output:  2...
+
+
+
