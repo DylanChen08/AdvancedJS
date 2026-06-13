@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Loop Tricky Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+
+    #output {
+      background: #252526;
+      border: 1px solid #3c3c3c;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-height: 200px;
+      line-height: 1.8;
+    }
+
+    #output .line {
+      display: block;
+      animation: fadeIn 0.15s ease;
+    }
+
+    #output .line::before {
+      content: "› ";
+      color: #569cd6;
+    }
+
+    #output .empty {
+      color: #666;
+      font-style: italic;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1>event-loop-tricky.js</h1>
+  <p>输出顺序（同步 → 微任务 → 宏任务）：</p>
+  <div id="output"><span class="empty">等待执行…</span></div>
+
+  <script>
+    const output = document.getElementById('output');
+    let index = 0;
+
+    const nativeLog = console.log;
+    console.log = (...args) => {
+      nativeLog(...args);
+      if (index === 0) output.innerHTML = '';
+      const line = document.createElement('span');
+      line.className = 'line';
+      line.textContent = `${++index}. ${args.join(' ')}`;
+      output.appendChild(line);
+    };
+  </script>
+  <script src="event-loop-tricky.js"></script>
+</body>
+</html>
