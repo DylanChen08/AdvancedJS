@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通过删除字母匹配到字典里最长单词动态演示</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d8deea;
+      --source: #2563eb;
+      --word: #db2777;
+      --match: #16a34a;
+      --warn: #f59e0b;
+      --bad: #dc2626;
+      --shadow: 0 14px 34px rgba(31, 41, 55, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 34%),
+        linear-gradient(315deg, rgba(219, 39, 119, 0.08), transparent 32%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 18px 38px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 50px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      margin: 0;
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .answer-card {
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .answer-card span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .answer-card strong {
+      display: block;
+      min-height: 42px;
+      margin-top: 6px;
+      color: var(--match);
+      font-size: 34px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .answer-detail {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 20px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      min-height: 650px;
+      padding: 22px;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      min-height: 86px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .track-area {
+      overflow-x: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .track-block {
+      min-width: 660px;
+      margin-bottom: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .track-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 44px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .chars {
+      display: grid;
+      gap: 10px;
+      position: relative;
+    }
+
+    .source-chars {
+      grid-template-columns: repeat(8, minmax(58px, 1fr));
+    }
+
+    .word-chars {
+      grid-template-columns: repeat(6, minmax(58px, 1fr));
+    }
+
+    .char {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 64px;
+      border: 2px solid var(--line);
+      background: #fff;
+      font-size: 25px;
+      font-weight: 900;
+      transition: transform 220ms ease, border-color 220ms ease, background 220ms ease, color 220ms ease;
+    }
+
+    .char.source-active {
+      border-color: var(--source);
+      background: #eff6ff;
+      color: var(--source);
+      transform: translateY(-7px);
+    }
+
+    .char.word-active {
+      border-color: var(--word);
+      background: #fdf2f8;
+      color: var(--word);
+      transform: translateY(-7px);
+    }
+
+    .char.hit {
+      border-color: var(--match);
+      background: #ecfdf3;
+      color: var(--match);
+      transform: translateY(-9px) scale(1.04);
+    }
+
+    .char.miss {
+      border-color: var(--warn);
+      background: #fffbeb;
+      color: var(--warn);
+    }
+
+    .index {
+      position: absolute;
+      bottom: -24px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -42px;
+      width: 58px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translateX(-50%);
+      transition: left 300ms ease, opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    .word-pointer {
+      color: var(--word);
+    }
+
+    .source-pointer {
+      color: var(--source);
+    }
+
+    .pointer-name {
+      display: grid;
+      place-items: center;
+      min-width: 34px;
+      height: 26px;
+      padding: 0 9px;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .source-pointer .pointer-name {
+      background: var(--source);
+    }
+
+    .word-pointer .pointer-name {
+      background: var(--word);
+    }
+
+    .pointer-line {
+      width: 2px;
+      height: 17px;
+      background: currentColor;
+    }
+
+    .pointer-tip {
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 9px solid currentColor;
+    }
+
+    .candidate-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .candidate {
+      min-height: 72px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
+    }
+
+    .candidate.active {
+      border-color: var(--word);
+      background: #fdf2f8;
+      transform: translateY(-4px);
+    }
+
+    .candidate.accept {
+      border-color: var(--match);
+      background: #ecfdf3;
+    }
+
+    .candidate.reject {
+      border-color: #fecaca;
+      background: #fff5f5;
+    }
+
+    .candidate-name {
+      display: block;
+      font-size: 21px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .candidate-status {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .explain {
+      min-height: 96px;
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.65;
+    }
+
+    .explain b {
+      color: var(--source);
+    }
+
+    .explain strong {
+      color: var(--match);
+    }
+
+    .panel {
+      padding: 18px;
+      position: sticky;
+      top: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    button:hover {
+      border-color: var(--source);
+      background: #eff6ff;
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      border-color: var(--source);
+      background: var(--source);
+      color: #fff;
+    }
+
+    .primary:hover {
+      background: #1d4ed8;
+      color: #fff;
+    }
+
+    .speed {
+      margin: 12px 0 18px;
+    }
+
+    .speed label {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin-top: 10px;
+      accent-color: var(--source);
+    }
+
+    .case-grid {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .case-button {
+      display: grid;
+      gap: 4px;
+      min-height: 58px;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .case-button.active {
+      border-color: var(--source);
+      background: #eff6ff;
+      color: var(--source);
+    }
+
+    .case-name {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .case-data {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+      margin: 0 0 18px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .code {
+      margin: 0;
+      padding: 14px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .code .keyword {
+      color: #93c5fd;
+    }
+
+    .code .ok {
+      color: #86efac;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 22px 12px 30px;
+      }
+
+      .stage,
+      .panel {
+        padding: 14px;
+      }
+
+      .meta-row,
+      .candidate-row {
+        grid-template-columns: 1fr;
+      }
+
+      .answer-card strong {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>524. 通过删除字母匹配到字典里最长单词</h1>
+        <p class="intro">枚举字典中的每个单词，用双指针判断它是否是字符串 s 的子序列。能匹配时，再用长度和字典序维护当前最优答案。</p>
+      </div>
+      <aside class="answer-card">
+        <span>当前最优答案</span>
+        <strong id="bestAnswer">""</strong>
+        <div class="answer-detail" id="bestDetail">等待开始</div>
+      </aside>
+    </section>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="meta-row">
+          <div class="metric">
+            <span class="metric-label">原字符串 s</span>
+            <span class="metric-value" id="sourceValue">abpcplea</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">当前候选 word</span>
+            <span class="metric-value" id="currentWord">ale</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">匹配进度</span>
+            <span class="metric-value" id="progressText">0 / 3</span>
+          </div>
+        </div>
+
+        <div class="track-area">
+          <div class="track-block">
+            <div class="track-title">
+              <span>s 指针 i：从左到右扫描原字符串</span>
+              <span id="iText">i = 0</span>
+            </div>
+            <div class="chars source-chars" id="sourceChars"></div>
+          </div>
+
+          <div class="track-block">
+            <div class="track-title">
+              <span>word 指针 j：只在字符匹配时前进</span>
+              <span id="jText">j = 0</span>
+            </div>
+            <div class="chars word-chars" id="wordChars"></div>
+          </div>
+        </div>
+
+        <div class="candidate-row" id="candidateRow"></div>
+        <div class="explain" id="explain">点击“播放”或“下一步”，观察双指针如何判断候选单词是不是 s 的子序列。</div>
+      </div>
+
+      <aside class="panel">
+        <h2>演示控制</h2>
+        <div class="controls">
+          <button class="primary" id="playBtn">播放</button>
+          <button id="nextBtn">下一步</button>
+          <button id="prevBtn">上一步</button>
+          <button id="resetBtn">重置</button>
+        </div>
+        <div class="speed">
+          <label for="speedRange">
+            <span>播放速度</span>
+            <span id="speedText">1.0x</span>
+          </label>
+          <input id="speedRange" type="range" min="0.5" max="2" value="1" step="0.25">
+        </div>
+        <h2>测试用例</h2>
+        <div class="case-grid" id="caseGrid"></div>
+        <ul class="rule-list">
+          <li>1. 对每个 dictionary[i] 执行一次子序列匹配。</li>
+          <li>2. 如果 s[i] === word[j]，说明匹配到一个字符，j++。</li>
+          <li>3. 扫描结束后，j === word.length 才表示整个单词匹配成功。</li>
+          <li>4. 成功单词更长，或长度相同但字典序更小，就更新答案。</li>
+        </ul>
+        <pre class="code"><code><span class="keyword">function</span> isSubsequence(s, word) {
+  <span class="keyword">let</span> j = 0;
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = 0; i &lt; s.length; i++) {
+    <span class="keyword">if</span> (s[i] === word[j]) j++;
+  }
+  <span class="keyword">return</span> j === word.length; <span class="ok">// 匹配完成</span>
+}</code></pre>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const testCases = [
+      {
+        name: "示例 1",
+        s: "abpcplea",
+        dictionary: ["ale", "apple", "monkey", "plea"]
+      },
+      {
+        name: "没有长单词匹配",
+        s: "abpcplea",
+        dictionary: ["a", "b", "c"]
+      },
+      {
+        name: "同长度取字典序小",
+        s: "bab",
+        dictionary: ["ba", "ab", "a", "b"]
+      },
+      {
+        name: "重复字符匹配",
+        s: "aaaaab",
+        dictionary: ["aaab", "aaaab", "aaaaa", "b"]
+      },
+      {
+        name: "后面候选更新答案",
+        s: "leetcode",
+        dictionary: ["let", "leet", "code", "leetcode", "etc"]
+      }
+    ];
+
+    let activeCaseIndex = 0;
+    let s = testCases[activeCaseIndex].s;
+    let dictionary = testCases[activeCaseIndex].dictionary;
+    const sourceChars = document.getElementById("sourceChars");
+    const wordChars = document.getElementById("wordChars");
+    const candidateRow = document.getElementById("candidateRow");
+    const caseGrid = document.getElementById("caseGrid");
+    const sourceValue = document.getElementById("sourceValue");
+    const currentWord = document.getElementById("currentWord");
+    const progressText = document.getElementById("progressText");
+    const iText = document.getElementById("iText");
+    const jText = document.getElementById("jText");
+    const explain = document.getElementById("explain");
+    const bestAnswer = document.getElementById("bestAnswer");
+    const bestDetail = document.getElementById("bestDetail");
+    const playBtn = document.getElementById("playBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const speedRange = document.getElementById("speedRange");
+    const speedText = document.getElementById("speedText");
+
+    let steps = [];
+    let stepIndex = 0;
+    let timer = null;
+
+    function expectedAnswer(source, words) {
+      return words.reduce((best, word) => {
+        let j = 0;
+        for (let i = 0; i < source.length; i++) {
+          if (source[i] === word[j]) j++;
+        }
+        const ok = j === word.length;
+        const better = word.length > best.length || (word.length === best.length && word < best);
+        return ok && better ? word : best;
+      }, "");
+    }
+
+    function buildSteps() {
+      const result = [];
+      let best = "";
+      const statuses = dictionary.map(() => "等待");
+
+      dictionary.forEach((word, wordIndex) => {
+        let j = 0;
+        result.push({
+          type: "start",
+          wordIndex,
+          word,
+          i: 0,
+          j,
+          best,
+          statuses: [...statuses],
+          message: `开始检查候选单词 <b>${word}</b>，重置 j = 0，从 s 的第 0 位开始扫描。`
+        });
+
+        for (let i = 0; i < s.length; i++) {
+          const matched = j < word.length && s[i] === word[j];
+          const beforeJ = j;
+          if (matched) j++;
+
+          result.push({
+            type: matched ? "match" : "scan",
+            wordIndex,
+            word,
+            i,
+            j,
+            beforeJ,
+            best,
+            statuses: [...statuses],
+            message: matched
+              ? `s[${i}] = <b>${s[i]}</b> 与 word[${beforeJ}] = <b>${word[beforeJ]}</b> 相同，匹配成功，j 前进到 ${j}。`
+              : `s[${i}] = <b>${s[i]}</b> 不能匹配 word[${j}] = <b>${word[j] || "已完成"}</b>，只移动 i 继续扫描。`
+          });
+        }
+
+        const ok = j === word.length;
+        let update = false;
+        let updateReason = "";
+        if (ok) {
+          update = word.length > best.length || (word.length === best.length && word < best);
+          updateReason = update
+            ? `匹配成功，并且 <strong>${word}</strong> 比当前答案更优，更新答案。`
+            : `匹配成功，但长度或字典序不优于 <strong>${best}</strong>，答案不变。`;
+          if (update) best = word;
+          statuses[wordIndex] = update ? "匹配成功，更新答案" : "匹配成功，未更新";
+        } else {
+          statuses[wordIndex] = "匹配失败";
+          updateReason = `<b>${word}</b> 没有完全匹配，j = ${j}，还差 ${word.length - j} 个字符。`;
+        }
+
+        result.push({
+          type: ok ? "accept" : "reject",
+          wordIndex,
+          word,
+          i: s.length,
+          j,
+          best,
+          statuses: [...statuses],
+          message: updateReason
+        });
+      });
+
+      result.push({
+        type: "done",
+        wordIndex: dictionary.length - 1,
+        word: dictionary[dictionary.length - 1],
+        i: s.length,
+        j: dictionary[dictionary.length - 1].length,
+        best,
+        statuses: [...statuses],
+        message: `所有候选单词检查完成，最终返回 <strong>${best}</strong>。`
+      });
+
+      return result;
+    }
+
+    function renderCaseButtons() {
+      caseGrid.innerHTML = testCases.map((item, index) => {
+        const answer = expectedAnswer(item.s, item.dictionary) || "空字符串";
+        return `
+          <button class="case-button${index === activeCaseIndex ? " active" : ""}" data-case="${index}">
+            <span class="case-name">${item.name}</span>
+            <span class="case-data">s="${item.s}"，答案：${answer}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderStatic() {
+      sourceValue.textContent = s;
+      sourceChars.style.gridTemplateColumns = `repeat(${Math.max(s.length, 1)}, minmax(58px, 1fr))`;
+      sourceChars.innerHTML = s.split("").map((char, index) => `
+        <div class="char" data-source="${index}">
+          ${char}
+          <span class="index">${index}</span>
+        </div>
+      `).join("") + `<div class="pointer source-pointer" id="sourcePointer"><span class="pointer-name">i</span><span class="pointer-line"></span><span class="pointer-tip"></span></div>`;
+
+      candidateRow.innerHTML = dictionary.map((word, index) => `
+        <div class="candidate" data-candidate="${index}">
+          <span class="candidate-name">${word}</span>
+          <span class="candidate-status">等待</span>
+        </div>
+      `).join("");
+    }
+
+    function loadCase(index) {
+      pause();
+      activeCaseIndex = index;
+      s = testCases[index].s;
+      dictionary = testCases[index].dictionary;
+      steps = buildSteps();
+      stepIndex = 0;
+      renderCaseButtons();
+      renderStatic();
+      renderStep();
+    }
+
+    function renderWord(word) {
+      wordChars.style.gridTemplateColumns = `repeat(${Math.max(word.length, 1)}, minmax(58px, 1fr))`;
+      wordChars.innerHTML = word.split("").map((char, index) => `
+        <div class="char" data-word="${index}">
+          ${char}
+          <span class="index">${index}</span>
+        </div>
+      `).join("") + `<div class="pointer word-pointer" id="wordPointer"><span class="pointer-name">j</span><span class="pointer-line"></span><span class="pointer-tip"></span></div>`;
+    }
+
+    function pointerLeft(container, index, length) {
+      if (length <= 0) return "29px";
+      const safeIndex = Math.max(0, Math.min(index, length - 1));
+      return `calc(${(safeIndex + 0.5) * (100 / length)}%)`;
+    }
+
+    function renderStep() {
+      const step = steps[stepIndex];
+      renderWord(step.word);
+
+      currentWord.textContent = step.word;
+      progressText.textContent = `${step.j} / ${step.word.length}`;
+      iText.textContent = `i = ${Math.min(step.i, s.length)}`;
+      jText.textContent = `j = ${step.j}`;
+      explain.innerHTML = step.message;
+      bestAnswer.textContent = step.best ? `"${step.best}"` : "\"\"";
+      bestDetail.textContent = step.best ? `长度 ${step.best.length}` : "还没有匹配成功的单词";
+
+      document.querySelectorAll("[data-source]").forEach((node) => {
+        const index = Number(node.dataset.source);
+        node.className = "char";
+        if (index === step.i && step.i < s.length) node.classList.add("source-active");
+        if (step.type === "match" && index === step.i) node.classList.add("hit");
+        if (step.type === "scan" && index === step.i) node.classList.add("miss");
+      });
+
+      document.querySelectorAll("[data-word]").forEach((node) => {
+        const index = Number(node.dataset.word);
+        node.className = "char";
+        if (index === step.beforeJ || index === step.j) node.classList.add("word-active");
+        if (step.type === "match" && index === step.beforeJ) node.classList.add("hit");
+      });
+
+      const sourcePointer = document.getElementById("sourcePointer");
+      const wordPointer = document.getElementById("wordPointer");
+      sourcePointer.style.left = pointerLeft(sourceChars, step.i, s.length);
+      sourcePointer.style.opacity = step.i < s.length ? "1" : "0.25";
+      wordPointer.style.left = pointerLeft(wordChars, step.j, step.word.length);
+      wordPointer.style.opacity = step.j < step.word.length ? "1" : "0.25";
+
+      document.querySelectorAll("[data-candidate]").forEach((node) => {
+        const index = Number(node.dataset.candidate);
+        const status = step.statuses[index];
+        node.className = "candidate";
+        if (index === step.wordIndex && step.type !== "done") node.classList.add("active");
+        if (status.includes("成功")) node.classList.add("accept");
+        if (status.includes("失败")) node.classList.add("reject");
+        node.querySelector(".candidate-status").textContent = status;
+      });
+
+      prevBtn.disabled = stepIndex === 0;
+      nextBtn.disabled = stepIndex === steps.length - 1;
+      if (stepIndex === steps.length - 1) pause();
+    }
+
+    function next() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex++;
+        renderStep();
+      }
+    }
+
+    function prev() {
+      if (stepIndex > 0) {
+        stepIndex--;
+        renderStep();
+      }
+    }
+
+    function play() {
+      if (timer) return;
+      if (stepIndex === steps.length - 1) stepIndex = 0;
+      playBtn.textContent = "暂停";
+      renderStep();
+      timer = setInterval(next, 1000 / Number(speedRange.value));
+    }
+
+    function pause() {
+      clearInterval(timer);
+      timer = null;
+      playBtn.textContent = "播放";
+    }
+
+    function reset() {
+      pause();
+      stepIndex = 0;
+      renderStep();
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (timer) pause();
+      else play();
+    });
+    nextBtn.addEventListener("click", () => {
+      pause();
+      next();
+    });
+    prevBtn.addEventListener("click", () => {
+      pause();
+      prev();
+    });
+    resetBtn.addEventListener("click", reset);
+    caseGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-case]");
+      if (!button) return;
+      loadCase(Number(button.dataset.case));
+    });
+    speedRange.addEventListener("input", () => {
+      speedText.textContent = `${Number(speedRange.value).toFixed(2).replace(".00", "")}x`;
+      if (timer) {
+        pause();
+        play();
+      }
+    });
+
+    steps = buildSteps();
+    renderCaseButtons();
+    renderStatic();
+    renderStep();
+  </script>
+</body>
+</html>

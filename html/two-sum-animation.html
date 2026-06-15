@@ -84,6 +84,14 @@
       line-height: 1.05;
     }
 
+    .answer-detail {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 330px;
@@ -223,11 +231,11 @@
       border-radius: 999px;
       font-size: 13px;
       font-weight: 900;
-      background: currentColor;
+      background: var(--left);
     }
 
-    .pointer-name span {
-      color: #fff;
+    .right-pointer .pointer-name {
+      background: var(--right);
     }
 
     .pointer-line {
@@ -451,8 +459,9 @@
         <p class="intro">这里演示排序数组里的两数之和。left 从最小值开始，right 从最大值开始。当前和小于 target，就让 left 右移变大；当前和大于 target，就让 right 左移变小。</p>
       </div>
       <div class="answer-card">
-        <span>当前结果</span>
+        <span>当前结果（索引）</span>
         <strong id="answerValue">寻找中</strong>
+        <div class="answer-detail" id="answerDetail">还没有找到目标和</div>
       </div>
     </header>
 
@@ -575,6 +584,7 @@ while (left &lt; right) {
       targetValue: document.getElementById("targetValue"),
       compareValue: document.getElementById("compareValue"),
       answerValue: document.getElementById("answerValue"),
+      answerDetail: document.getElementById("answerDetail"),
       leftNum: document.getElementById("leftNum"),
       rightNum: document.getElementById("rightNum"),
       sumNum: document.getElementById("sumNum"),
@@ -689,6 +699,7 @@ while (left &lt; right) {
       els.sumNum.textContent = state.sum ?? "-";
       els.compareValue.textContent = state.sum === null ? "-" : compareText(state.sum);
       els.answerValue.textContent = answerText(state);
+      els.answerDetail.textContent = answerDetailText(state);
       els.narration.innerHTML = `<strong>第 ${current + 1} 步：</strong>${state.message}`;
       renderSteps();
     }
@@ -709,6 +720,18 @@ while (left &lt; right) {
       }
 
       return "寻找中";
+    }
+
+    function answerDetailText(state) {
+      if (state.type === "match") {
+        return `数值：${nums[state.left]} + ${nums[state.right]} = ${target}`;
+      }
+
+      if (state.type === "not-found") {
+        return "没有任意两个数相加等于 target";
+      }
+
+      return "还没有找到目标和";
     }
 
     function renderSteps() {
