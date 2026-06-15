@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最接近的三数之和动态演示</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d8deea;
+      --fixed: #7c3aed;
+      --left: #2563eb;
+      --right: #e11d48;
+      --best: #16a34a;
+      --warn: #f59e0b;
+      --shadow: 0 14px 36px rgba(31, 41, 55, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 34%),
+        linear-gradient(315deg, rgba(124, 58, 237, 0.08), transparent 32%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 18px 36px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 50px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .answer-card {
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .answer-card span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .answer-card strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--best);
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 20px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      min-height: 620px;
+      padding: 22px;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      min-height: 86px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .array-area {
+      min-height: 320px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-gutter: stable;
+    }
+
+    .array-track {
+      position: relative;
+      width: 100%;
+      min-height: 304px;
+      padding: 72px 22px 116px;
+    }
+
+    .array {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 84px;
+      border: 2px solid var(--line);
+      background: #fff;
+      font-size: 28px;
+      font-weight: 900;
+      transition: transform 240ms ease, border-color 240ms ease, background 240ms ease, color 240ms ease;
+    }
+
+    .cell.fixed {
+      border-color: var(--fixed);
+      background: #f5f3ff;
+      color: var(--fixed);
+      transform: translateY(-10px);
+    }
+
+    .cell.left {
+      border-color: var(--left);
+      background: #eff6ff;
+      color: var(--left);
+      transform: translateY(-10px);
+    }
+
+    .cell.right {
+      border-color: var(--right);
+      background: #fff1f2;
+      color: var(--right);
+      transform: translateY(-10px);
+    }
+
+    .cell.best {
+      box-shadow: inset 0 0 0 4px rgba(22, 163, 74, 0.18);
+    }
+
+    .index {
+      position: absolute;
+      bottom: -28px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .pointer {
+      position: absolute;
+      top: 14px;
+      width: 86px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translateX(-50%);
+      transition: left 320ms ease, opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    .pointer.left-pointer {
+      top: 164px;
+      flex-direction: column-reverse;
+    }
+
+    .pointer.right-pointer {
+      top: 164px;
+      flex-direction: column-reverse;
+    }
+
+    .pointer-name {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      height: 30px;
+      padding: 0 10px;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .fixed-pointer {
+      color: var(--fixed);
+    }
+
+    .left-pointer {
+      color: var(--left);
+    }
+
+    .right-pointer {
+      color: var(--right);
+    }
+
+    .fixed-pointer .pointer-name {
+      background: var(--fixed);
+    }
+
+    .left-pointer .pointer-name {
+      background: var(--left);
+    }
+
+    .right-pointer .pointer-name {
+      background: var(--right);
+    }
+
+    .pointer-line {
+      width: 2px;
+      height: 30px;
+      background: currentColor;
+    }
+
+    .pointer-tip {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid currentColor;
+    }
+
+    .left-pointer .pointer-tip,
+    .right-pointer .pointer-tip {
+      border-top: 0;
+      border-bottom: 10px solid currentColor;
+    }
+
+    .formula {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      min-height: 92px;
+      margin-top: 6px;
+      font-size: 27px;
+      font-weight: 900;
+    }
+
+    .pill {
+      min-width: 66px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      text-align: center;
+    }
+
+    .pill.fixed-num {
+      color: var(--fixed);
+      border-color: var(--fixed);
+    }
+
+    .pill.left-num {
+      color: var(--left);
+      border-color: var(--left);
+    }
+
+    .pill.right-num {
+      color: var(--right);
+      border-color: var(--right);
+    }
+
+    .pill.sum-num {
+      color: #92400e;
+      border-color: var(--warn);
+      background: #fffbeb;
+    }
+
+    .narration {
+      min-height: 110px;
+      margin-top: 18px;
+      padding: 18px;
+      border-left: 6px solid var(--fixed);
+      background: #fff;
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .narration strong {
+      color: var(--fixed);
+    }
+
+    .side {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      height: 42px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    button:hover {
+      border-color: #9aa4b2;
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      border-color: var(--fixed);
+      background: var(--fixed);
+      color: #fff;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    select,
+    input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 15px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 10px;
+      max-height: 290px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .step {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .step.current {
+      border-color: var(--fixed);
+      background: #f5f3ff;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--line);
+    }
+
+    .dot.fixed {
+      background: var(--fixed);
+    }
+
+    .dot.left {
+      background: var(--left);
+    }
+
+    .dot.right {
+      background: var(--right);
+    }
+
+    .dot.best {
+      background: var(--best);
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      color: #edf2f7;
+      background: #1f232b;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .layout,
+      .meta-row {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 560px;
+        padding: 16px;
+      }
+
+      .formula {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>16. 最接近的三数之和</h1>
+        <p class="intro">先把数组排序。每轮固定一个数 i，然后在它右侧用 left 和 right 两个指针夹逼。当前三数和偏小就移动 left，偏大就移动 right，同时记录离 target 最近的 sum。</p>
+      </div>
+      <div class="answer-card">
+        <span>当前最接近的和 bestSum</span>
+        <strong id="bestSum">-</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="meta-row">
+          <div class="metric">
+            <span class="metric-label">原数组 nums</span>
+            <span class="metric-value" id="originalNums">[-1,2,1,-4]</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">排序后</span>
+            <span class="metric-value" id="sortedNums">[-4,-1,1,2]</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">target</span>
+            <span class="metric-value" id="targetValue">1</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">当前差值 |sum - target|</span>
+            <span class="metric-value" id="diffValue">-</span>
+          </div>
+        </div>
+
+        <div class="array-area" id="arrayArea">
+          <div class="array-track" id="arrayTrack">
+            <div class="pointer fixed-pointer" id="fixedPointer">
+              <span class="pointer-name">i</span>
+              <span class="pointer-line"></span>
+              <span class="pointer-tip"></span>
+            </div>
+            <div class="pointer left-pointer" id="leftPointer">
+              <span class="pointer-name">left</span>
+              <span class="pointer-line"></span>
+              <span class="pointer-tip"></span>
+            </div>
+            <div class="pointer right-pointer" id="rightPointer">
+              <span class="pointer-name">right</span>
+              <span class="pointer-line"></span>
+              <span class="pointer-tip"></span>
+            </div>
+            <div class="array" id="array"></div>
+          </div>
+        </div>
+
+        <div class="formula">
+          <span class="pill fixed-num" id="fixedNum">-</span>
+          <span>+</span>
+          <span class="pill left-num" id="leftNum">-</span>
+          <span>+</span>
+          <span class="pill right-num" id="rightNum">-</span>
+          <span>=</span>
+          <span class="pill sum-num" id="sumNum">-</span>
+        </div>
+
+        <div class="narration" id="narration"></div>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>控制</h2>
+          <div class="controls">
+            <button class="primary" id="playBtn">播放</button>
+            <button id="nextBtn">单步</button>
+            <button id="prevBtn">上一步</button>
+            <button id="resetBtn">重置</button>
+          </div>
+
+          <div class="field">
+            <label for="caseSelect">选择测试用例</label>
+            <select id="caseSelect"></select>
+          </div>
+
+          <div class="field">
+            <label for="speedRange">播放速度</label>
+            <input id="speedRange" type="range" min="500" max="1800" step="100" value="1000">
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>指针含义</h2>
+          <div class="legend">
+            <div class="legend-item"><span class="dot fixed"></span>i：固定第一个数</div>
+            <div class="legend-item"><span class="dot left"></span>left：从 i 右边开始找较小数</div>
+            <div class="legend-item"><span class="dot right"></span>right：从数组末尾开始找较大数</div>
+            <div class="legend-item"><span class="dot best"></span>bestSum：当前最接近 target 的和</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>步骤记录</h2>
+          <div class="steps" id="steps"></div>
+        </section>
+
+        <section class="panel">
+          <h2>核心代码</h2>
+          <pre><code>nums.sort((a, b) =&gt; a - b);
+let best = nums[0] + nums[1] + nums[2];
+
+for (let i = 0; i &lt; nums.length - 2; i++) {
+  let left = i + 1;
+  let right = nums.length - 1;
+
+  while (left &lt; right) {
+    const sum = nums[i] + nums[left] + nums[right];
+    if (Math.abs(sum - target) &lt; Math.abs(best - target)) {
+      best = sum;
+    }
+    if (sum &lt; target) left++;
+    else if (sum &gt; target) right--;
+    else return sum;
+  }
+}</code></pre>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const cases = [
+      { nums: [-1, 2, 1, -4], target: 1 },
+      { nums: [0, 0, 0], target: 1 },
+      { nums: [4, 0, 5, -5, 3, 3, 0, -4, -5], target: -2 },
+      { nums: [1, 1, 1, 0], target: -100 },
+      { nums: [-3, -2, -5, 3, -4], target: -1 },
+      { nums: [1, 2, 4, 8, 16, 32, 64], target: 82 },
+      { nums: [-8, -6, -3, -1, 2, 4, 7, 9], target: 5 },
+      { nums: [5, 5, 5, 5, 5], target: 14 },
+      { nums: [-10, -7, -2, 1, 3, 6, 11], target: 0 },
+      { nums: [2, 3, 8, 9, 10], target: 24 },
+      { nums: [-100, -50, -10, 0, 10, 50, 100], target: 1 },
+      { nums: [-2, 0, 1, 1, 2], target: 2 },
+      { nums: [7, -6, 4, -2, 9, 1, 3, -5], target: 6 },
+      { nums: [12, -4, -1, 0, 6, 8, -8, 2, 5], target: 10 }
+    ];
+
+    const els = {
+      arrayArea: document.getElementById("arrayArea"),
+      arrayTrack: document.getElementById("arrayTrack"),
+      array: document.getElementById("array"),
+      fixedPointer: document.getElementById("fixedPointer"),
+      leftPointer: document.getElementById("leftPointer"),
+      rightPointer: document.getElementById("rightPointer"),
+      originalNums: document.getElementById("originalNums"),
+      sortedNums: document.getElementById("sortedNums"),
+      targetValue: document.getElementById("targetValue"),
+      diffValue: document.getElementById("diffValue"),
+      bestSum: document.getElementById("bestSum"),
+      fixedNum: document.getElementById("fixedNum"),
+      leftNum: document.getElementById("leftNum"),
+      rightNum: document.getElementById("rightNum"),
+      sumNum: document.getElementById("sumNum"),
+      narration: document.getElementById("narration"),
+      steps: document.getElementById("steps"),
+      playBtn: document.getElementById("playBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      prevBtn: document.getElementById("prevBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      caseSelect: document.getElementById("caseSelect"),
+      speedRange: document.getElementById("speedRange")
+    };
+
+    let original = [];
+    let nums = [];
+    let target = 0;
+    let states = [];
+    let current = 0;
+    let timer = null;
+
+    function renderCaseOptions() {
+      els.caseSelect.innerHTML = cases.map((item, index) => {
+        return `<option value="${index}">Case ${index + 1}: nums = [${item.nums.join(",")}], target = ${item.target}</option>`;
+      }).join("");
+    }
+
+    function buildStates() {
+      const list = [];
+      let best = nums[0] + nums[1] + nums[2];
+      let bestIndices = [0, 1, 2];
+
+      list.push({
+        type: "init",
+        i: 0,
+        left: 1,
+        right: 2,
+        sum: best,
+        best,
+        message: `排序后先取前三个数作为初始 bestSum：${nums[0]} + ${nums[1]} + ${nums[2]} = ${best}。`
+      });
+
+      for (let i = 0; i < nums.length - 2; i++) {
+        let left = i + 1;
+        let right = nums.length - 1;
+
+        list.push({
+          type: "fix",
+          i,
+          left,
+          right,
+          sum: nums[i] + nums[left] + nums[right],
+          best,
+          message: `固定 i = ${i}，值是 ${nums[i]}。left 从 ${left} 开始，right 从 ${right} 开始。`
+        });
+
+        while (left < right) {
+          const sum = nums[i] + nums[left] + nums[right];
+          const oldBest = best;
+          let improved = false;
+
+          if (Math.abs(sum - target) < Math.abs(best - target)) {
+            best = sum;
+            bestIndices = [i, left, right];
+            improved = true;
+          }
+
+          let message = `${nums[i]} + ${nums[left]} + ${nums[right]} = ${sum}。`;
+          message += improved
+            ? ` 它比旧 bestSum ${oldBest} 更接近 target，更新 bestSum 为 ${best}。`
+            : ` 它没有比当前 bestSum ${best} 更接近 target。`;
+
+          if (sum === target) {
+            message += " 已经完全等于 target，直接得到最优答案。";
+            list.push({ type: "match", i, left, right, sum, best, message });
+            return list;
+          }
+
+          if (sum < target) {
+            message += " 当前和偏小，需要更大的和，所以 left 向右移动。";
+            list.push({ type: "move-left", i, left, right, sum, best, message });
+            left++;
+          } else {
+            message += " 当前和偏大，需要更小的和，所以 right 向左移动。";
+            list.push({ type: "move-right", i, left, right, sum, best, message });
+            right--;
+          }
+        }
+      }
+
+      list.push({
+        type: "done",
+        i: bestIndices[0],
+        left: bestIndices[1],
+        right: bestIndices[2],
+        sum: best,
+        best,
+        message: `所有组合检查结束，最终最接近 target 的三数之和是 ${best}，来自 ${nums[bestIndices[0]]} + ${nums[bestIndices[1]]} + ${nums[bestIndices[2]]}。`
+      });
+
+      return list;
+    }
+
+    function renderArray() {
+      const minCellWidth = 76;
+      const gap = 12;
+      const minTrackWidth = nums.length * minCellWidth + (nums.length - 1) * gap + 44;
+
+      els.arrayTrack.style.minWidth = `${minTrackWidth}px`;
+      els.array.style.gridTemplateColumns = `repeat(${nums.length}, minmax(${minCellWidth}px, 1fr))`;
+      els.array.innerHTML = nums.map((num, index) => {
+        return `<div class="cell" data-index="${index}">
+          ${num}
+          <span class="index">${index}</span>
+        </div>`;
+      }).join("");
+    }
+
+    function movePointer(pointer, index) {
+      const cell = els.array.querySelector(`[data-index="${index}"]`);
+      if (!cell) return;
+
+      const trackRect = els.arrayTrack.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      const center = cellRect.left - trackRect.left + cellRect.width / 2;
+      pointer.style.left = `${center}px`;
+    }
+
+    function renderState() {
+      const state = states[current];
+      if (!state) return;
+
+      els.array.querySelectorAll(".cell").forEach((cell) => {
+        cell.classList.remove("fixed", "left", "right", "best");
+      });
+
+      const fixedCell = els.array.querySelector(`[data-index="${state.i}"]`);
+      const leftCell = els.array.querySelector(`[data-index="${state.left}"]`);
+      const rightCell = els.array.querySelector(`[data-index="${state.right}"]`);
+
+      if (fixedCell) fixedCell.classList.add("fixed");
+      if (leftCell) leftCell.classList.add("left");
+      if (rightCell) rightCell.classList.add("right");
+
+      if (state.type === "match" || state.type === "done") {
+        [fixedCell, leftCell, rightCell].forEach((cell) => {
+          if (cell) cell.classList.add("best");
+        });
+      }
+
+      movePointer(els.fixedPointer, state.i);
+      movePointer(els.leftPointer, state.left);
+      movePointer(els.rightPointer, state.right);
+
+      els.originalNums.textContent = `[${original.join(",")}]`;
+      els.sortedNums.textContent = `[${nums.join(",")}]`;
+      els.targetValue.textContent = target;
+      els.fixedNum.textContent = nums[state.i] ?? "-";
+      els.leftNum.textContent = nums[state.left] ?? "-";
+      els.rightNum.textContent = nums[state.right] ?? "-";
+      els.sumNum.textContent = state.sum;
+      els.bestSum.textContent = state.best;
+      els.diffValue.textContent = Math.abs(state.sum - target);
+      els.narration.innerHTML = `<strong>第 ${current + 1} 步：</strong>${state.message}`;
+      renderSteps();
+    }
+
+    function renderSteps() {
+      els.steps.innerHTML = states.map((state, index) => {
+        const className = index === current ? "step current" : "step";
+        return `<div class="${className}">第 ${index + 1} 步：${state.message}</div>`;
+      }).join("");
+    }
+
+    function loadCase(index) {
+      stopPlay();
+      const item = cases[index];
+      original = [...item.nums];
+      nums = [...item.nums].sort((a, b) => a - b);
+      target = item.target;
+      states = buildStates();
+      current = 0;
+      renderArray();
+      renderState();
+      requestAnimationFrame(renderState);
+    }
+
+    function stopPlay() {
+      clearInterval(timer);
+      timer = null;
+      els.playBtn.textContent = "播放";
+    }
+
+    function nextStep() {
+      if (current < states.length - 1) {
+        current++;
+        renderState();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep() {
+      stopPlay();
+      if (current > 0) {
+        current--;
+        renderState();
+      }
+    }
+
+    function reset() {
+      stopPlay();
+      current = 0;
+      renderState();
+    }
+
+    function togglePlay() {
+      if (timer) {
+        stopPlay();
+        return;
+      }
+
+      els.playBtn.textContent = "暂停";
+      timer = setInterval(nextStep, Number(els.speedRange.value));
+    }
+
+    els.playBtn.addEventListener("click", togglePlay);
+    els.nextBtn.addEventListener("click", nextStep);
+    els.prevBtn.addEventListener("click", prevStep);
+    els.resetBtn.addEventListener("click", reset);
+    els.caseSelect.addEventListener("change", () => loadCase(Number(els.caseSelect.value)));
+    els.speedRange.addEventListener("input", () => {
+      if (timer) {
+        stopPlay();
+        togglePlay();
+      }
+    });
+    window.addEventListener("resize", renderState);
+
+    renderCaseOptions();
+    loadCase(0);
+  </script>
+</body>
+</html>

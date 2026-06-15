@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>双指针算法动态演示</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #20242c;
+      --muted: #667085;
+      --line: #d9dde7;
+      --left: #2563eb;
+      --right: #e11d48;
+      --match: #16a34a;
+      --warn: #f59e0b;
+      --shadow: 0 16px 40px rgba(31, 41, 55, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 32%),
+        linear-gradient(315deg, rgba(22, 163, 74, 0.08), transparent 30%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 36px;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding: 18px 0 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .target-box {
+      min-width: 210px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .target-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .target-value {
+      margin-top: 4px;
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--left);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 20px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .visual {
+      min-height: 560px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow);
+    }
+
+    .array-wrap {
+      position: relative;
+      min-height: 260px;
+      padding: 58px 0 72px;
+      overflow-x: auto;
+    }
+
+    .array {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(72px, 1fr));
+      gap: 10px;
+      min-width: 650px;
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 76px;
+      border: 2px solid var(--line);
+      background: #fff;
+      font-size: 25px;
+      font-weight: 800;
+      transition: transform 220ms ease, border-color 220ms ease, background 220ms ease, color 220ms ease;
+    }
+
+    .cell.active-left {
+      border-color: var(--left);
+      background: #eff6ff;
+      color: var(--left);
+      transform: translateY(-8px);
+    }
+
+    .cell.active-right {
+      border-color: var(--right);
+      background: #fff1f2;
+      color: var(--right);
+      transform: translateY(-8px);
+    }
+
+    .cell.matched {
+      border-color: var(--match);
+      background: #ecfdf3;
+      color: var(--match);
+      transform: translateY(-10px) scale(1.04);
+    }
+
+    .index {
+      position: absolute;
+      bottom: -28px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .pointer {
+      position: absolute;
+      top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 72px;
+      transform: translateX(-50%);
+      transition: left 350ms ease;
+      pointer-events: none;
+    }
+
+    .pointer.right-pointer {
+      top: 160px;
+    }
+
+    .pointer-name {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      height: 30px;
+      padding: 0 10px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      border-radius: 999px;
+    }
+
+    .left-pointer .pointer-name {
+      background: var(--left);
+    }
+
+    .right-pointer .pointer-name {
+      background: var(--right);
+    }
+
+    .pointer-line {
+      width: 2px;
+      height: 28px;
+      background: currentColor;
+    }
+
+    .pointer-tip {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid currentColor;
+    }
+
+    .left-pointer {
+      color: var(--left);
+    }
+
+    .right-pointer {
+      color: var(--right);
+    }
+
+    .equation {
+      display: grid;
+      grid-template-columns: repeat(5, auto);
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      min-height: 92px;
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .pill {
+      min-width: 70px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      text-align: center;
+    }
+
+    .pill.left-num {
+      border-color: var(--left);
+      color: var(--left);
+    }
+
+    .pill.right-num {
+      border-color: var(--right);
+      color: var(--right);
+    }
+
+    .pill.sum-num {
+      border-color: var(--warn);
+      color: #92400e;
+      background: #fffbeb;
+    }
+
+    .decision {
+      min-height: 96px;
+      margin-top: 18px;
+      padding: 18px;
+      border-left: 6px solid var(--left);
+      background: #fff;
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .decision strong {
+      color: var(--left);
+    }
+
+    .side {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      height: 42px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease, border-color 160ms ease;
+    }
+
+    button:hover {
+      border-color: #9aa4b2;
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      border-color: var(--left);
+      background: var(--left);
+      color: #fff;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0 10px;
+      font-size: 15px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--line);
+    }
+
+    .dot.left {
+      background: var(--left);
+    }
+
+    .dot.right {
+      background: var(--right);
+    }
+
+    .dot.match {
+      background: var(--match);
+    }
+
+    .steps {
+      display: grid;
+      gap: 10px;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .step {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .step.current {
+      border-color: var(--left);
+      background: #eff6ff;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      background: #1f232b;
+      color: #edf2f7;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      .header,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .target-box {
+        min-width: 0;
+      }
+
+      .visual {
+        min-height: 500px;
+        padding: 18px;
+      }
+
+      .equation {
+        grid-template-columns: repeat(3, auto);
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>双指针算法动态演示</h1>
+        <p class="subtitle">场景：在一个有序数组中找两个数，使它们的和等于目标值。左指针从小数开始，右指针从大数开始，每次根据当前和决定移动哪一边。</p>
+      </div>
+      <div class="target-box">
+        <div class="target-label">当前目标值 target</div>
+        <div class="target-value" id="targetValue">13</div>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <div class="visual">
+        <div class="array-wrap" id="arrayWrap">
+          <div class="pointer left-pointer" id="leftPointer">
+            <span class="pointer-name">left</span>
+            <span class="pointer-line"></span>
+            <span class="pointer-tip"></span>
+          </div>
+          <div class="pointer right-pointer" id="rightPointer">
+            <span class="pointer-name">right</span>
+            <span class="pointer-line"></span>
+            <span class="pointer-tip"></span>
+          </div>
+          <div class="array" id="array"></div>
+        </div>
+
+        <div class="equation">
+          <span class="pill left-num" id="leftNum">1</span>
+          <span>+</span>
+          <span class="pill right-num" id="rightNum">10</span>
+          <span>=</span>
+          <span class="pill sum-num" id="sumNum">11</span>
+        </div>
+
+        <div class="decision" id="decision">
+          当前和等于目标值，找到答案。
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>控制</h2>
+          <div class="controls">
+            <button class="primary" id="playBtn">播放</button>
+            <button id="nextBtn">单步</button>
+            <button id="prevBtn">上一步</button>
+            <button id="resetBtn">重置</button>
+          </div>
+
+          <div class="field">
+            <label for="targetSelect">选择目标值</label>
+            <select id="targetSelect">
+              <option value="13">13：能找到 3 + 10</option>
+              <option value="11">11：能找到 1 + 10</option>
+              <option value="18">18：能找到 8 + 10</option>
+              <option value="20">20：找不到</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="speedRange">播放速度</label>
+            <input id="speedRange" type="range" min="500" max="1800" step="100" value="1000">
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="dot left"></span>左指针：当前较小的数</div>
+            <div class="legend-item"><span class="dot right"></span>右指针：当前较大的数</div>
+            <div class="legend-item"><span class="dot match"></span>绿色：找到答案</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>步骤记录</h2>
+          <div class="steps" id="steps"></div>
+        </section>
+
+        <section class="panel">
+          <h2>核心代码</h2>
+          <pre><code>while (left &lt; right) {
+  const sum = arr[left] + arr[right];
+
+  if (sum === target) return [left, right];
+  if (sum &lt; target) left++;
+  else right--;
+}</code></pre>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const nums = [1, 2, 3, 4, 6, 8, 9, 10];
+
+    const arrayEl = document.getElementById("array");
+    const arrayWrap = document.getElementById("arrayWrap");
+    const leftPointer = document.getElementById("leftPointer");
+    const rightPointer = document.getElementById("rightPointer");
+    const leftNum = document.getElementById("leftNum");
+    const rightNum = document.getElementById("rightNum");
+    const sumNum = document.getElementById("sumNum");
+    const decision = document.getElementById("decision");
+    const stepsEl = document.getElementById("steps");
+    const targetValue = document.getElementById("targetValue");
+    const targetSelect = document.getElementById("targetSelect");
+    const playBtn = document.getElementById("playBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const speedRange = document.getElementById("speedRange");
+
+    let target = Number(targetSelect.value);
+    let states = [];
+    let current = 0;
+    let timer = null;
+
+    function buildStates() {
+      const nextStates = [];
+      let left = 0;
+      let right = nums.length - 1;
+
+      while (left < right) {
+        const sum = nums[left] + nums[right];
+        let message = "";
+        let status = "checking";
+
+        if (sum === target) {
+          message = `${nums[left]} + ${nums[right]} = ${sum}，刚好等于 target，找到答案。`;
+          status = "matched";
+          nextStates.push({ left, right, sum, message, status });
+          break;
+        }
+
+        if (sum < target) {
+          message = `${nums[left]} + ${nums[right]} = ${sum}，比 target 小。说明左边这个数太小，left 向右移动。`;
+          status = "move-left";
+          nextStates.push({ left, right, sum, message, status });
+          left++;
+        } else {
+          message = `${nums[left]} + ${nums[right]} = ${sum}，比 target 大。说明右边这个数太大，right 向左移动。`;
+          status = "move-right";
+          nextStates.push({ left, right, sum, message, status });
+          right--;
+        }
+      }
+
+      if (!nextStates.some((state) => state.status === "matched")) {
+        nextStates.push({
+          left,
+          right,
+          sum: left === right ? nums[left] * 2 : 0,
+          message: "left 和 right 已经相遇，没有找到两个数的和等于 target。",
+          status: "not-found"
+        });
+      }
+
+      return nextStates;
+    }
+
+    function renderArray() {
+      arrayEl.innerHTML = nums.map((num, index) => {
+        return `<div class="cell" data-index="${index}">
+          ${num}
+          <span class="index">${index}</span>
+        </div>`;
+      }).join("");
+    }
+
+    function movePointer(pointer, index) {
+      const cell = arrayEl.querySelector(`[data-index="${index}"]`);
+      if (!cell) return;
+
+      const wrapRect = arrayWrap.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      const center = cellRect.left - wrapRect.left + arrayWrap.scrollLeft + cellRect.width / 2;
+      pointer.style.left = `${center}px`;
+    }
+
+    function renderSteps() {
+      stepsEl.innerHTML = states.map((state, index) => {
+        const className = index === current ? "step current" : "step";
+        return `<div class="${className}">第 ${index + 1} 步：${state.message}</div>`;
+      }).join("");
+    }
+
+    function renderState() {
+      const state = states[current];
+      const cells = arrayEl.querySelectorAll(".cell");
+
+      cells.forEach((cell) => {
+        cell.classList.remove("active-left", "active-right", "matched");
+      });
+
+      if (!state) return;
+
+      const leftCell = arrayEl.querySelector(`[data-index="${state.left}"]`);
+      const rightCell = arrayEl.querySelector(`[data-index="${state.right}"]`);
+
+      if (leftCell) leftCell.classList.add(state.status === "matched" ? "matched" : "active-left");
+      if (rightCell) rightCell.classList.add(state.status === "matched" ? "matched" : "active-right");
+
+      movePointer(leftPointer, state.left);
+      movePointer(rightPointer, state.right);
+
+      leftNum.textContent = nums[state.left] ?? "-";
+      rightNum.textContent = nums[state.right] ?? "-";
+      sumNum.textContent = state.status === "not-found" ? "-" : state.sum;
+      decision.innerHTML = buildDecisionHtml(state);
+      targetValue.textContent = target;
+      renderSteps();
+    }
+
+    function buildDecisionHtml(state) {
+      if (state.status === "matched") {
+        return `<strong>命中：</strong>${state.message}`;
+      }
+
+      if (state.status === "move-left") {
+        return `<strong>移动 left：</strong>${state.message}`;
+      }
+
+      if (state.status === "move-right") {
+        return `<strong>移动 right：</strong>${state.message}`;
+      }
+
+      return `<strong>结束：</strong>${state.message}`;
+    }
+
+    function stopPlay() {
+      clearInterval(timer);
+      timer = null;
+      playBtn.textContent = "播放";
+    }
+
+    function nextStep() {
+      if (current < states.length - 1) {
+        current++;
+        renderState();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep() {
+      stopPlay();
+      if (current > 0) {
+        current--;
+        renderState();
+      }
+    }
+
+    function reset() {
+      stopPlay();
+      current = 0;
+      renderState();
+    }
+
+    function togglePlay() {
+      if (timer) {
+        stopPlay();
+        return;
+      }
+
+      playBtn.textContent = "暂停";
+      timer = setInterval(nextStep, Number(speedRange.value));
+    }
+
+    function rebuild() {
+      target = Number(targetSelect.value);
+      states = buildStates();
+      current = 0;
+      renderState();
+    }
+
+    renderArray();
+    rebuild();
+
+    playBtn.addEventListener("click", togglePlay);
+    nextBtn.addEventListener("click", nextStep);
+    prevBtn.addEventListener("click", prevStep);
+    resetBtn.addEventListener("click", reset);
+    targetSelect.addEventListener("change", rebuild);
+    speedRange.addEventListener("input", () => {
+      if (timer) {
+        stopPlay();
+        togglePlay();
+      }
+    });
+    window.addEventListener("resize", renderState);
+  </script>
+</body>
+</html>
