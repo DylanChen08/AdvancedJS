@@ -591,13 +591,25 @@
           <li>3. 扫描结束后，j === word.length 才表示整个单词匹配成功。</li>
           <li>4. 成功单词更长，或长度相同但字典序更小，就更新答案。</li>
         </ul>
-        <pre class="code"><code><span class="keyword">function</span> isSubsequence(s, word) {
-  <span class="keyword">let</span> j = 0;
-  <span class="keyword">for</span> (<span class="keyword">let</span> i = 0; i &lt; s.length; i++) {
-    <span class="keyword">if</span> (s[i] === word[j]) j++;
+        <pre class="code"><code><span class="keyword">var</span> findLongestWord = <span class="keyword">function</span>(s, dictionary) {
+  <span class="keyword">let</span> ans = "";
+
+  <span class="keyword">for</span> (<span class="keyword">const</span> word <span class="keyword">of</span> dictionary) {
+    <span class="keyword">let</span> j = 0;
+
+    <span class="keyword">for</span> (<span class="keyword">let</span> i = 0; i &lt; s.length; i++) {
+      <span class="keyword">if</span> (s[i] === word[j]) j++;
+    }
+
+    <span class="keyword">if</span> (j === word.length &amp;&amp;
+        (word.length &gt; ans.length ||
+        (word.length === ans.length &amp;&amp; word &lt; ans))) {
+      ans = word;
+    }
   }
-  <span class="keyword">return</span> j === word.length; <span class="ok">// 匹配完成</span>
-}</code></pre>
+
+  <span class="keyword">return</span> ans;
+};</code></pre>
       </aside>
     </section>
   </main>
@@ -734,15 +746,16 @@
         });
       });
 
+      const lastWord = dictionary[dictionary.length - 1] || "";
       result.push({
         type: "done",
-        wordIndex: dictionary.length - 1,
-        word: dictionary[dictionary.length - 1],
+        wordIndex: Math.max(0, dictionary.length - 1),
+        word: lastWord,
         i: s.length,
-        j: dictionary[dictionary.length - 1].length,
+        j: lastWord.length,
         best,
         statuses: [...statuses],
-        message: `所有候选单词检查完成，最终返回 <strong>${best}</strong>。`
+        message: `所有候选单词检查完成，最终返回 <strong>${best || "空字符串"}</strong>。`
       });
 
       return result;
