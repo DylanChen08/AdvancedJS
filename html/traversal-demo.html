@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>二叉树先序 / 中序 / 后序遍历演示</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #10141b;
+        color: #f5f7fb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(99, 212, 139, 0.13), rgba(16, 20, 27, 0) 320px),
+          #10141b;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1420px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 30px 0 36px;
+      }
+
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 31px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      .intro {
+        max-width: 790px;
+        margin: 0;
+        color: #aeb8c8;
+        line-height: 1.65;
+      }
+
+      .ruleCards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        gap: 10px;
+        min-width: 520px;
+      }
+
+      .ruleCard {
+        border: 1px solid #314055;
+        border-radius: 8px;
+        padding: 12px;
+        background: #151d27;
+      }
+
+      .ruleCard strong {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 15px;
+      }
+
+      .ruleCard span {
+        color: #aeb8c8;
+        font-size: 14px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(620px, 1fr) minmax(430px, 0.72fr);
+        gap: 16px;
+      }
+
+      .panel {
+        border: 1px solid #2e3b4f;
+        border-radius: 8px;
+        background: #151b24;
+      }
+
+      .panelHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #2a3546;
+      }
+
+      .panelHeader h2 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 9px 13px;
+        color: #0f1720;
+        background: #63d48b;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        color: #f5f7fb;
+        background: #243044;
+      }
+
+      button.active {
+        background: #f6c44f;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .treeArea {
+        padding: 18px;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #263244;
+        border-radius: 8px;
+        background: #0f141d;
+      }
+
+      .edge {
+        stroke: #536174;
+        stroke-width: 4;
+        stroke-linecap: round;
+      }
+
+      .node circle {
+        fill: #182231;
+        stroke: #718096;
+        stroke-width: 3;
+        transition: fill 150ms ease, stroke 150ms ease, stroke-width 150ms ease;
+      }
+
+      .node text {
+        fill: #f5f7fb;
+        font-size: 26px;
+        font-weight: 760;
+        text-anchor: middle;
+        dominant-baseline: central;
+      }
+
+      .node.current circle {
+        fill: #4b3916;
+        stroke: #f6c44f;
+        stroke-width: 6;
+      }
+
+      .node.visited circle {
+        fill: #143625;
+        stroke: #63d48b;
+        stroke-width: 5;
+      }
+
+      .orderRibbon {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-height: 52px;
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        background: #121923;
+      }
+
+      .orderItem {
+        min-width: 44px;
+        border: 1px solid #334055;
+        border-radius: 8px;
+        padding: 8px 10px;
+        color: #dbe7f7;
+        background: #192231;
+        text-align: center;
+      }
+
+      .orderItem.active {
+        color: #0f1720;
+        background: #f6c44f;
+      }
+
+      .orderItem.done {
+        color: #0f1720;
+        background: #63d48b;
+      }
+
+      .metricGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .metric {
+        min-height: 78px;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 13px;
+        background: #121923;
+      }
+
+      .metric span {
+        display: block;
+        color: #aeb8c8;
+        font-size: 13px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 22px;
+      }
+
+      .side {
+        display: grid;
+        gap: 16px;
+      }
+
+      .explain {
+        padding: 16px 18px 18px;
+        color: #cbd5e1;
+        line-height: 1.72;
+      }
+
+      .explain strong {
+        color: #fff;
+      }
+
+      .formula {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .formulaRow {
+        display: grid;
+        grid-template-columns: 78px 1fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 10px;
+        background: #121923;
+      }
+
+      .formulaRow span:first-child {
+        color: #8fa1ba;
+      }
+
+      pre {
+        margin: 0;
+        overflow: auto;
+        padding: 16px 18px 18px;
+        color: #d7e3f4;
+        background: #0f141d;
+        border-radius: 0 0 8px 8px;
+        font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      .codeKeyword {
+        color: #58a6ff;
+      }
+
+      .codeComment {
+        color: #6f7d91;
+      }
+
+      .trace {
+        max-height: 300px;
+        overflow: auto;
+        padding: 14px 18px 18px;
+      }
+
+      .traceRow {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid #273244;
+        color: #cbd5e1;
+      }
+
+      .traceRow:last-child {
+        border-bottom: 0;
+      }
+
+      .traceRow.active {
+        color: #fff;
+      }
+
+      .stepNo {
+        color: #7e8da2;
+      }
+
+      @media (max-width: 1120px) {
+        .hero,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          flex-direction: column;
+        }
+
+        .ruleCards {
+          width: 100%;
+          min-width: 0;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .ruleCards,
+        .metricGrid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div>
+          <h1>二叉树遍历：先序、中序、后序</h1>
+          <p class="intro">
+            三种 DFS 遍历的区别只有一个核心点：什么时候访问“根节点”。
+            左子树和右子树的递归方向不变，变化的是根节点在递归过程中的位置。
+          </p>
+        </div>
+
+        <div class="ruleCards" aria-label="遍历规则">
+          <div class="ruleCard">
+            <strong>先序 Preorder</strong>
+            <span>根 → 左 → 右</span>
+          </div>
+          <div class="ruleCard">
+            <strong>中序 Inorder</strong>
+            <span>左 → 根 → 右</span>
+          </div>
+          <div class="ruleCard">
+            <strong>后序 Postorder</strong>
+            <span>左 → 右 → 根</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <section class="panel">
+          <div class="panelHeader">
+            <h2>同一棵树，对比三种访问顺序</h2>
+            <div class="controls">
+              <button id="preBtn" type="button" class="active">先序</button>
+              <button id="inBtn" type="button" class="secondary">中序</button>
+              <button id="postBtn" type="button" class="secondary">后序</button>
+              <button id="stepBtn" type="button" class="secondary">下一步</button>
+              <button id="runBtn" type="button">运行</button>
+              <button id="resetBtn" type="button" class="secondary">重置</button>
+            </div>
+          </div>
+
+          <div class="treeArea">
+            <svg id="treeSvg" viewBox="0 0 720 450" role="img" aria-label="二叉树遍历演示图"></svg>
+            <div id="orderRibbon" class="orderRibbon"></div>
+
+            <div class="metricGrid">
+              <div class="metric">
+                <span>当前遍历</span>
+                <strong id="modeMetric">先序</strong>
+              </div>
+              <div class="metric">
+                <span>访问进度</span>
+                <strong id="progressMetric">0 / 7</strong>
+              </div>
+              <div class="metric">
+                <span>完整结果</span>
+                <strong id="resultMetric">--</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>怎么记</h2>
+            </div>
+            <div class="explain">
+              <strong>先、中、后</strong> 指的是“根节点”的访问时机。
+              左右子树总是按“先处理左，再处理右”的方向递归。
+              <div class="formula">
+                <div class="formulaRow"><span>先序</span><span>先访问根，再进入左子树和右子树。</span></div>
+                <div class="formulaRow"><span>中序</span><span>左子树处理完，回到根，再处理右子树。</span></div>
+                <div class="formulaRow"><span>后序</span><span>左右子树都处理完，最后访问根。</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>递归模板</h2>
+            </div>
+            <pre><code><span class="codeComment">// root 是当前子树的根节点</span>
+<span class="codeKeyword">function</span> traverse(root) {
+  <span class="codeKeyword">if</span> (root === null) <span class="codeKeyword">return</span>;
+
+  <span class="codeComment">// 先序：在这里访问 root</span>
+  traverse(root.left);
+  <span class="codeComment">// 中序：在这里访问 root</span>
+  traverse(root.right);
+  <span class="codeComment">// 后序：在这里访问 root</span>
+}</code></pre>
+          </section>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>执行记录</h2>
+            </div>
+            <div id="trace" class="trace"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const tree = [
+        { val: "A", x: 360, y: 60, left: "B", right: "C" },
+        { val: "B", x: 210, y: 165, left: "D", right: "E" },
+        { val: "C", x: 510, y: 165, left: "F", right: "G" },
+        { val: "D", x: 130, y: 295, left: null, right: null },
+        { val: "E", x: 290, y: 295, left: null, right: null },
+        { val: "F", x: 430, y: 295, left: null, right: null },
+        { val: "G", x: 590, y: 295, left: null, right: null }
+      ];
+
+      const nodes = new Map(tree.map((node) => [node.val, node]));
+      const modes = {
+        preorder: {
+          label: "先序",
+          rule: "根 → 左 → 右",
+          buttonId: "preBtn"
+        },
+        inorder: {
+          label: "中序",
+          rule: "左 → 根 → 右",
+          buttonId: "inBtn"
+        },
+        postorder: {
+          label: "后序",
+          rule: "左 → 右 → 根",
+          buttonId: "postBtn"
+        }
+      };
+
+      let mode = "preorder";
+      let order = [];
+      let stepIndex = -1;
+      let timer = null;
+
+      const svg = document.getElementById("treeSvg");
+      const orderRibbon = document.getElementById("orderRibbon");
+      const traceEl = document.getElementById("trace");
+      const modeMetric = document.getElementById("modeMetric");
+      const progressMetric = document.getElementById("progressMetric");
+      const resultMetric = document.getElementById("resultMetric");
+      const stepBtn = document.getElementById("stepBtn");
+      const runBtn = document.getElementById("runBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      function child(node, side) {
+        return node[side] ? nodes.get(node[side]) : null;
+      }
+
+      function drawTree() {
+        svg.innerHTML = "";
+
+        for (const node of tree) {
+          for (const side of ["left", "right"]) {
+            const next = child(node, side);
+            if (!next) continue;
+
+            const edge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            edge.setAttribute("class", "edge");
+            edge.setAttribute("x1", String(node.x));
+            edge.setAttribute("y1", String(node.y + 32));
+            edge.setAttribute("x2", String(next.x));
+            edge.setAttribute("y2", String(next.y - 32));
+            svg.appendChild(edge);
+          }
+        }
+
+        for (const node of tree) {
+          const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          group.setAttribute("class", "node");
+          group.setAttribute("data-val", node.val);
+
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", String(node.x));
+          circle.setAttribute("cy", String(node.y));
+          circle.setAttribute("r", "34");
+
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", String(node.x));
+          text.setAttribute("y", String(node.y + 1));
+          text.textContent = node.val;
+
+          group.append(circle, text);
+          svg.appendChild(group);
+        }
+      }
+
+      function buildOrder(selectedMode) {
+        const result = [];
+
+        function visit(node) {
+          if (!node) return;
+
+          if (selectedMode === "preorder") result.push(node.val);
+          visit(child(node, "left"));
+          if (selectedMode === "inorder") result.push(node.val);
+          visit(child(node, "right"));
+          if (selectedMode === "postorder") result.push(node.val);
+        }
+
+        visit(nodes.get("A"));
+        return result;
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        order = buildOrder(mode);
+        stepIndex = -1;
+        clearInterval(timer);
+        timer = null;
+        render();
+      }
+
+      function reset() {
+        stepIndex = -1;
+        clearInterval(timer);
+        timer = null;
+        render();
+      }
+
+      function nextStep() {
+        if (stepIndex < order.length - 1) {
+          stepIndex += 1;
+          render();
+        } else {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+
+      function run() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+          nextStep();
+          if (stepIndex >= order.length - 1) {
+            clearInterval(timer);
+            timer = null;
+          }
+        }, 520);
+      }
+
+      function renderButtons() {
+        for (const [key, config] of Object.entries(modes)) {
+          const button = document.getElementById(config.buttonId);
+          button.className = key === mode ? "active" : "secondary";
+        }
+      }
+
+      function renderTree() {
+        const visited = new Set(order.slice(0, Math.max(stepIndex + 1, 0)));
+        const current = order[stepIndex];
+
+        for (const group of svg.querySelectorAll(".node")) {
+          const val = group.dataset.val;
+          const classes = ["node"];
+          if (visited.has(val)) classes.push("visited");
+          if (val === current) classes.push("current");
+          group.setAttribute("class", classes.join(" "));
+        }
+      }
+
+      function renderRibbon() {
+        orderRibbon.innerHTML = "";
+
+        order.forEach((val, index) => {
+          const item = document.createElement("div");
+          const done = index < stepIndex;
+          const active = index === stepIndex;
+          item.className = `orderItem${done ? " done" : ""}${active ? " active" : ""}`;
+          item.textContent = `${index + 1}. ${val}`;
+          orderRibbon.appendChild(item);
+        });
+      }
+
+      function renderTrace() {
+        traceEl.innerHTML = "";
+
+        if (stepIndex < 0) {
+          const row = document.createElement("div");
+          row.className = "traceRow active";
+          row.innerHTML = `<span class="stepNo">准备</span><span>${modes[mode].label}规则：${modes[mode].rule}。点击“下一步”开始。</span>`;
+          traceEl.appendChild(row);
+          return;
+        }
+
+        for (let i = 0; i <= stepIndex; i += 1) {
+          const row = document.createElement("div");
+          row.className = `traceRow${i === stepIndex ? " active" : ""}`;
+          row.innerHTML = `<span class="stepNo">#${i + 1}</span><span>访问节点 ${order[i]}，当前结果：${order.slice(0, i + 1).join(" → ")}</span>`;
+          traceEl.appendChild(row);
+        }
+
+        traceEl.scrollTop = traceEl.scrollHeight;
+      }
+
+      function renderMetrics() {
+        const visible = order.slice(0, Math.max(stepIndex + 1, 0));
+        modeMetric.textContent = modes[mode].label;
+        progressMetric.textContent = `${visible.length} / ${order.length}`;
+        resultMetric.textContent = visible.length === order.length ? order.join(" → ") : "--";
+      }
+
+      function render() {
+        renderButtons();
+        renderTree();
+        renderRibbon();
+        renderTrace();
+        renderMetrics();
+      }
+
+      drawTree();
+      setMode("preorder");
+
+      document.getElementById("preBtn").addEventListener("click", () => setMode("preorder"));
+      document.getElementById("inBtn").addEventListener("click", () => setMode("inorder"));
+      document.getElementById("postBtn").addEventListener("click", () => setMode("postorder"));
+      stepBtn.addEventListener("click", nextStep);
+      runBtn.addEventListener("click", run);
+      resetBtn.addEventListener("click", reset);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平衡二叉树 · 交互演示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+
+  header {
+    text-align: center;
+    padding: 32px 20px 20px;
+    background: linear-gradient(135deg, #1a1f2e, #0f1117);
+    border-bottom: 1px solid #2d3748;
+  }
+  header h1 { font-size: 2rem; color: #63b3ed; margin-bottom: 8px; }
+  header p { color: #a0aec0; font-size: 0.95rem; }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 22px;
+    border-radius: 24px;
+    border: 1px solid #4a5568;
+    background: transparent;
+    color: #a0aec0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .tab:hover { border-color: #63b3ed; color: #63b3ed; }
+  .tab.active { background: #63b3ed; border-color: #63b3ed; color: #0f1117; font-weight: 600; }
+
+  .section {
+    display: none;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .section.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { color: #63b3ed; margin-bottom: 16px; font-size: 1.1rem; }
+  .card p  { color: #a0aec0; line-height: 1.7; margin-bottom: 10px; font-size: 0.95rem; }
+  .card p:last-child { margin-bottom: 0; }
+
+  .highlight { color: #f6ad55; font-weight: 600; }
+  .green     { color: #68d391; }
+  .red       { color: #fc8181; }
+  .blue      { color: #63b3ed; }
+
+  /* ── Formula box ── */
+  .formula {
+    background: #0f1117;
+    border-left: 3px solid #63b3ed;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── SVG tree canvas ── */
+  .tree-wrap {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tree-box {
+    flex: 1;
+    min-width: 260px;
+    background: #0f1117;
+    border-radius: 10px;
+    border: 1px solid #2d3748;
+    padding: 16px;
+    text-align: center;
+  }
+  .tree-box h3 { margin-bottom: 12px; font-size: 0.95rem; }
+  .tree-box svg { width: 100%; max-width: 320px; height: 220px; }
+
+  /* ── BF table ── */
+  .bf-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+  .bf-table th, .bf-table td { padding: 8px 12px; text-align: center; border: 1px solid #2d3748; }
+  .bf-table th { background: #2d3748; color: #a0aec0; }
+  .bf-table .ok  { color: #68d391; }
+  .bf-table .bad { color: #fc8181; font-weight: 600; }
+
+  /* ── Interactive insert ── */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .input-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #4a5568;
+    background: #0f1117;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+  }
+  .input-row input:focus { outline: none; border-color: #63b3ed; }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-blue  { background: #63b3ed; color: #0f1117; }
+  .btn-red   { background: #fc8181; color: #0f1117; }
+  .btn-gray  { background: #4a5568; color: #e2e8f0; }
+
+  .tree-svg-large { width: 100%; height: 340px; }
+
+  /* ── Linked list vs tree ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-box {
+    background: #0f1117;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .compare-box h3 { margin-bottom: 8px; font-size: 0.9rem; }
+
+  .node-circle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .node-green { background: #276749; border: 2px solid #68d391; color: #68d391; }
+  .node-red   { background: #742a2a; border: 2px solid #fc8181; color: #fc8181; }
+  .arrow { display: inline-block; margin: 0 2px; color: #a0aec0; font-size: 1.2rem; }
+
+  /* ── Complexity bar ── */
+  .complexity-row {
+    display: flex; align-items: center; gap: 12px; margin: 8px 0;
+    font-size: 0.9rem;
+  }
+  .complexity-label { width: 130px; color: #a0aec0; flex-shrink: 0; }
+  .bar-track {
+    flex: 1; height: 16px; background: #2d3748; border-radius: 8px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 8px; transition: width 1s ease; }
+  .bar-red  { background: linear-gradient(90deg, #9b2c2c, #fc8181); }
+  .bar-green{ background: linear-gradient(90deg, #276749, #68d391); }
+  .bar-label { width: 80px; text-align: right; font-size: 0.8rem; }
+
+  /* ── Types table ── */
+  .types-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .types-table th, .types-table td {
+    padding: 12px 14px; border: 1px solid #2d3748; text-align: left;
+  }
+  .types-table th { background: #2d3748; color: #a0aec0; }
+  .types-table tr:hover td { background: #1e2535; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .badge-avl   { background: #2b6cb0; color: #bee3f8; }
+  .badge-rb    { background: #742a2a; color: #fed7d7; }
+  .badge-treap { background: #285e61; color: #b2f5ea; }
+
+  /* ── Log ── */
+  #log {
+    background: #0f1117;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: #a0aec0;
+    min-height: 48px;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>平衡二叉树 · 交互演示</h1>
+  <p>通过可视化动画理解平衡条件、平衡因子与为什么需要平衡</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)">① 什么是平衡</button>
+  <button class="tab" onclick="switchTab(1)">② 平衡因子对比</button>
+  <button class="tab" onclick="switchTab(2)">③ 亲手插入节点</button>
+  <button class="tab" onclick="switchTab(3)">④ 为什么要平衡</button>
+  <button class="tab" onclick="switchTab(4)">⑤ 三种常见类型</button>
+</div>
+
+<!-- ════════════════════════════ TAB 0 ════════════════════════════ -->
+<div class="section active" id="tab0">
+  <div class="card">
+    <h2>平衡二叉树的核心定义</h2>
+    <p>
+      平衡二叉树（AVL Tree）是一种特殊的 <span class="highlight">二叉搜索树（BST）</span>，
+      它在 BST 的"左小右大"规则之上，增加了一条约束：
+    </p>
+    <div class="formula">
+      对任意节点：｜左子树高度 − 右子树高度｜ ≤ 1
+    </div>
+    <p>
+      这条约束保证整棵树的高度维持在 <span class="green">O(log n)</span>，
+      使得查找、插入、删除都能高效完成。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>高度（Height）是什么？</h2>
+    <p>
+      节点的 <span class="highlight">高度</span> = 从该节点到其最远叶子节点经过的边数。
+    </p>
+    <p>叶子节点高度 = 0，空节点高度定义为 −1（便于计算）。</p>
+    <div class="tree-wrap" style="margin-top:16px">
+      <div class="tree-box">
+        <h3>高度示意</h3>
+        <svg viewBox="0 0 300 200">
+          <!-- edges -->
+          <line x1="150" y1="40" x2="80"  y2="90"  stroke="#4a5568" stroke-width="2"/>
+          <line x1="150" y1="40" x2="220" y2="90"  stroke="#4a5568" stroke-width="2"/>
+          <line x1="80"  y1="90" x2="45"  y2="145" stroke="#4a5568" stroke-width="2"/>
+          <line x1="80"  y1="90" x2="115" y2="145" stroke="#4a5568" stroke-width="2"/>
+          <!-- nodes -->
+          <circle cx="150" cy="40"  r="22" fill="#2c5282" stroke="#63b3ed" stroke-width="2"/>
+          <circle cx="80"  cy="90"  r="22" fill="#285e61" stroke="#68d391" stroke-width="2"/>
+          <circle cx="220" cy="90"  r="22" fill="#285e61" stroke="#68d391" stroke-width="2"/>
+          <circle cx="45"  cy="145" r="22" fill="#276749" stroke="#9ae6b4" stroke-width="2"/>
+          <circle cx="115" cy="145" r="22" fill="#276749" stroke="#9ae6b4" stroke-width="2"/>
+          <!-- labels -->
+          <text x="150" y="45"  text-anchor="middle" fill="#bee3f8" font-size="13" font-weight="700">4</text>
+          <text x="80"  y="95"  text-anchor="middle" fill="#b2f5ea" font-size="13" font-weight="700">2</text>
+          <text x="220" y="95"  text-anchor="middle" fill="#b2f5ea" font-size="13" font-weight="700">6</text>
+          <text x="45"  y="150" text-anchor="middle" fill="#c6f6d5" font-size="13" font-weight="700">1</text>
+          <text x="115" y="150" text-anchor="middle" fill="#c6f6d5" font-size="13" font-weight="700">3</text>
+          <!-- height labels -->
+          <text x="245" y="45"  fill="#f6ad55" font-size="11">高度=2</text>
+          <text x="245" y="95"  fill="#f6ad55" font-size="11">高度=1</text>
+          <text x="20"  y="150" fill="#f6ad55" font-size="11">h=0</text>
+          <text x="140" y="150" fill="#f6ad55" font-size="11">h=0</text>
+        </svg>
+      </div>
+      <div class="tree-box" style="text-align:left; font-size:0.9rem;">
+        <h3 style="margin-bottom:12px">逐层解读</h3>
+        <p style="margin-bottom:8px"><span class="highlight">节点 1、3、6</span>（叶子）→ 高度 = 0</p>
+        <p style="margin-bottom:8px"><span class="highlight">节点 2</span>（有两个叶子）→ 高度 = 1</p>
+        <p style="margin-bottom:8px"><span class="highlight">节点 4</span>（根）→ 高度 = 2</p>
+        <p style="color:#a0aec0; margin-top:12px; line-height:1.7">
+          平衡因子 BF = 左子树高度 − 右子树高度<br>
+          节点 4：BF = h(左=2的子树高度1) − h(右=6的子树高度0) = <span class="green">1</span><br>
+          ｜1｜ ≤ 1 ✓ 满足平衡条件
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ TAB 1 ════════════════════════════ -->
+<div class="section" id="tab1">
+  <div class="card">
+    <h2>平衡 vs 不平衡：平衡因子对比</h2>
+    <p>下面两棵树包含相同的节点，但结构不同——一个满足平衡条件，一个违反。</p>
+  </div>
+
+  <div class="tree-wrap">
+    <div class="tree-box">
+      <h3 class="green">✓ 平衡二叉树（插入顺序：4,2,6,1,3,5,7）</h3>
+      <svg viewBox="0 0 300 230">
+        <line x1="150" y1="40"  x2="80"  y2="95"  stroke="#4a5568" stroke-width="2"/>
+        <line x1="150" y1="40"  x2="220" y2="95"  stroke="#4a5568" stroke-width="2"/>
+        <line x1="80"  y1="95"  x2="45"  y2="155" stroke="#4a5568" stroke-width="2"/>
+        <line x1="80"  y1="95"  x2="115" y2="155" stroke="#4a5568" stroke-width="2"/>
+        <line x1="220" y1="95"  x2="185" y2="155" stroke="#4a5568" stroke-width="2"/>
+        <line x1="220" y1="95"  x2="255" y2="155" stroke="#4a5568" stroke-width="2"/>
+        <circle cx="150" cy="40"  r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="80"  cy="95"  r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="220" cy="95"  r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="45"  cy="155" r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="115" cy="155" r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="185" cy="155" r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="255" cy="155" r="20" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <text x="150" y="45"  text-anchor="middle" fill="white" font-size="13" font-weight="700">4</text>
+        <text x="80"  y="100" text-anchor="middle" fill="white" font-size="13" font-weight="700">2</text>
+        <text x="220" y="100" text-anchor="middle" fill="white" font-size="13" font-weight="700">6</text>
+        <text x="45"  y="160" text-anchor="middle" fill="white" font-size="13" font-weight="700">1</text>
+        <text x="115" y="160" text-anchor="middle" fill="white" font-size="13" font-weight="700">3</text>
+        <text x="185" y="160" text-anchor="middle" fill="white" font-size="13" font-weight="700">5</text>
+        <text x="255" y="160" text-anchor="middle" fill="white" font-size="13" font-weight="700">7</text>
+        <!-- BF labels -->
+        <text x="175" y="35"  fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="100" y="90"  fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="238" y="90"  fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="10"  y="150" fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="120" y="150" fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="190" y="150" fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="260" y="150" fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="150" y="210" text-anchor="middle" fill="#68d391" font-size="12">高度 = 2，所有 |BF| ≤ 1</text>
+      </svg>
+    </div>
+
+    <div class="tree-box">
+      <h3 class="red">✗ 不平衡（插入顺序：1,2,3,4）</h3>
+      <svg viewBox="0 0 300 230">
+        <line x1="60" y1="40"  x2="100" y2="95"  stroke="#4a5568" stroke-width="2"/>
+        <line x1="100" y1="95"  x2="140" y2="150" stroke="#4a5568" stroke-width="2"/>
+        <line x1="140" y1="150" x2="180" y2="205" stroke="#4a5568" stroke-width="2"/>
+        <circle cx="60"  cy="40"  r="20" fill="#742a2a" stroke="#fc8181" stroke-width="2"/>
+        <circle cx="100" cy="95"  r="20" fill="#742a2a" stroke="#fc8181" stroke-width="2"/>
+        <circle cx="140" cy="150" r="20" fill="#742a2a" stroke="#fc8181" stroke-width="2"/>
+        <circle cx="180" cy="205" r="20" fill="#742a2a" stroke="#fc8181" stroke-width="2"/>
+        <text x="60"  y="45"  text-anchor="middle" fill="white" font-size="13" font-weight="700">1</text>
+        <text x="100" y="100" text-anchor="middle" fill="white" font-size="13" font-weight="700">2</text>
+        <text x="140" y="155" text-anchor="middle" fill="white" font-size="13" font-weight="700">3</text>
+        <text x="180" y="210" text-anchor="middle" fill="white" font-size="13" font-weight="700">4</text>
+        <!-- BF labels -->
+        <text x="5"   y="35"  fill="#fc8181" font-size="10">BF=-3!</text>
+        <text x="120" y="90"  fill="#fc8181" font-size="10">BF=-2!</text>
+        <text x="160" y="145" fill="#fc8181" font-size="10">BF=-1</text>
+        <text x="200" y="200" fill="#f6ad55" font-size="10">BF=0</text>
+        <text x="150" y="230" text-anchor="middle" fill="#fc8181" font-size="12">高度 = 3，退化成链表！</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h2>平衡因子计算表</h2>
+    <table class="bf-table">
+      <thead>
+        <tr><th>节点</th><th>左子树高度</th><th>右子树高度</th><th>BF = 左−右</th><th>是否平衡</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>4（根）</td><td>1</td><td>1</td><td>0</td><td class="ok">✓ 平衡</td></tr>
+        <tr><td>2</td><td>0</td><td>0</td><td>0</td><td class="ok">✓ 平衡</td></tr>
+        <tr><td>6</td><td>0</td><td>0</td><td>0</td><td class="ok">✓ 平衡</td></tr>
+        <tr><td>1,3,5,7（叶子）</td><td>-1</td><td>-1</td><td>0</td><td class="ok">✓ 平衡</td></tr>
+        <tr style="border-top:2px solid #4a5568"><td colspan="5" style="text-align:center;color:#a0aec0;font-style:italic">—— 不平衡示例 ——</td></tr>
+        <tr><td>1（根，顺序插入）</td><td>-1</td><td>2</td><td>-3</td><td class="bad">✗ 违反！|BF|=3</td></tr>
+        <tr><td>2</td><td>-1</td><td>1</td><td>-2</td><td class="bad">✗ 违反！|BF|=2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════ TAB 2 ════════════════════════════ -->
+<div class="section" id="tab2">
+  <div class="card">
+    <h2>亲手插入节点，观察树的变化</h2>
+    <p>向普通 BST 插入数字，观察平衡因子与树高的变化。试试顺序插入 1,2,3,4,5 看树退化成什么样子。</p>
+  </div>
+
+  <div class="card">
+    <div class="input-row">
+      <input type="number" id="insertVal" placeholder="输入数字（1–99）" min="1" max="99">
+      <button class="btn btn-blue" onclick="insertNode()">插入</button>
+      <button class="btn btn-gray" onclick="resetTree()">重置</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn btn-gray" style="font-size:0.8rem" onclick="presetInsert([4,2,6,1,3,5,7])">预设：平衡插入 4,2,6,1,3,5,7</button>
+      <button class="btn btn-gray" style="font-size:0.8rem" onclick="presetInsert([1,2,3,4,5])">预设：顺序插入 1,2,3,4,5（退化）</button>
+    </div>
+
+    <svg id="treeSvg" class="tree-svg-large" viewBox="0 0 800 320"></svg>
+    <div id="log">等待插入第一个节点…</div>
+
+    <div style="margin-top:16px; display:flex; gap:20px; flex-wrap:wrap; font-size:0.85rem; color:#a0aec0">
+      <span><span style="display:inline-block;width:14px;height:14px;background:#276749;border:2px solid #68d391;border-radius:50%;vertical-align:middle"></span> 平衡节点（|BF|≤1）</span>
+      <span><span style="display:inline-block;width:14px;height:14px;background:#742a2a;border:2px solid #fc8181;border-radius:50%;vertical-align:middle"></span> 失衡节点（|BF|>1）</span>
+      <span style="color:#f6ad55">橙色数字 = 平衡因子</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ TAB 3 ════════════════════════════ -->
+<div class="section" id="tab3">
+  <div class="card">
+    <h2>为什么不平衡会导致性能崩溃？</h2>
+    <p>
+      普通 BST 在最坏情况下（顺序插入）会退化成一条 <span class="highlight">链表</span>，
+      查找需要逐个遍历所有节点。而平衡树通过维持高度在 <span class="green">O(log n)</span>，
+      保证了每次操作只需少量比较。
+    </p>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-box" style="border:1px solid #742a2a">
+      <h3 class="red">退化链表（不平衡 BST）</h3>
+      <p style="color:#a0aec0;font-size:0.8rem;margin-bottom:14px">顺序插入 1→2→3→4→5</p>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div class="node-circle node-red">1</div>
+        <div style="color:#a0aec0;font-size:1.2rem">↓</div>
+        <div class="node-circle node-red">2</div>
+        <div style="color:#a0aec0;font-size:1.2rem">↓</div>
+        <div class="node-circle node-red">3</div>
+        <div style="color:#a0aec0;font-size:1.2rem">↓</div>
+        <div class="node-circle node-red">4</div>
+        <div style="color:#a0aec0;font-size:1.2rem">↓</div>
+        <div class="node-circle node-red">5</div>
+      </div>
+      <p style="margin-top:14px;color:#fc8181;font-size:0.85rem">高度 = 4 = n−1</p>
+    </div>
+
+    <div class="compare-box" style="border:1px solid #276749">
+      <h3 class="green">平衡二叉树</h3>
+      <p style="color:#a0aec0;font-size:0.8rem;margin-bottom:14px">任意顺序插入后自动旋转保持平衡</p>
+      <svg viewBox="0 0 200 160" style="width:100%;max-width:200px">
+        <line x1="100" y1="30" x2="55"  y2="80"  stroke="#4a5568" stroke-width="2"/>
+        <line x1="100" y1="30" x2="145" y2="80"  stroke="#4a5568" stroke-width="2"/>
+        <line x1="55"  y1="80" x2="30"  y2="130" stroke="#4a5568" stroke-width="2"/>
+        <line x1="55"  y1="80" x2="80"  y2="130" stroke="#4a5568" stroke-width="2"/>
+        <circle cx="100" cy="30"  r="18" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="55"  cy="80"  r="18" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="145" cy="80"  r="18" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="30"  cy="130" r="18" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <circle cx="80"  cy="130" r="18" fill="#276749" stroke="#68d391" stroke-width="2"/>
+        <text x="100" y="35"  text-anchor="middle" fill="white" font-size="12" font-weight="700">3</text>
+        <text x="55"  y="85"  text-anchor="middle" fill="white" font-size="12" font-weight="700">2</text>
+        <text x="145" y="85"  text-anchor="middle" fill="white" font-size="12" font-weight="700">5</text>
+        <text x="30"  y="135" text-anchor="middle" fill="white" font-size="12" font-weight="700">1</text>
+        <text x="80"  y="135" text-anchor="middle" fill="white" font-size="12" font-weight="700">4</text>
+      </svg>
+      <p style="margin-top:8px;color:#68d391;font-size:0.85rem">高度 ≈ log₂5 ≈ 2</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h2>操作复杂度对比</h2>
+    <p style="margin-bottom:16px">n = 节点总数（以下以 n=1,000,000 为例演示差距）</p>
+
+    <div class="complexity-row">
+      <span class="complexity-label red">退化 BST（最坏）</span>
+      <div class="bar-track"><div class="bar-fill bar-red" id="bar-worst" style="width:0%"></div></div>
+      <span class="bar-label red" id="lbl-worst">O(n)</span>
+    </div>
+    <div class="complexity-row">
+      <span class="complexity-label green">平衡 BST</span>
+      <div class="bar-track"><div class="bar-fill bar-green" id="bar-balanced" style="width:0%"></div></div>
+      <span class="bar-label green" id="lbl-balanced">O(log n)</span>
+    </div>
+    <div class="complexity-row">
+      <span class="complexity-label" style="color:#63b3ed">哈希表（对比）</span>
+      <div class="bar-track"><div class="bar-fill" id="bar-hash" style="width:0%;background:linear-gradient(90deg,#2b6cb0,#63b3ed)"></div></div>
+      <span class="bar-label blue" id="lbl-hash">O(1)</span>
+    </div>
+
+    <p style="margin-top:16px;color:#a0aec0;font-size:0.85rem">
+      n = 1,000,000 时，退化 BST 需要 <span class="red">1,000,000</span> 次比较，
+      平衡 BST 只需约 <span class="green">20</span> 次（log₂ 1,000,000 ≈ 20）。
+    </p>
+
+    <div style="margin-top:16px;background:#0f1117;border-radius:8px;padding:14px;font-size:0.85rem;color:#a0aec0;line-height:1.8">
+      <strong style="color:#e2e8f0">但哈希表不是更快吗？</strong><br>
+      哈希表查找是 O(1)，但它 <span class="red">不支持范围查询、排序输出</span>。<br>
+      平衡 BST 的优势在于：查找 + 范围查询 + 排序 + 前后驱查询 都是 O(log n)。<br>
+      例如数据库索引（B树/B+树就是多叉平衡树的扩展）。
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ TAB 4 ════════════════════════════ -->
+<div class="section" id="tab4">
+  <div class="card">
+    <h2>三种常见的平衡二叉树</h2>
+    <p>平衡树有多种实现，它们在"平衡严格程度"和"旋转开销"之间做出不同权衡。</p>
+  </div>
+
+  <table class="types-table">
+    <thead>
+      <tr><th>类型</th><th>平衡条件</th><th>插入/删除复杂度</th><th>特点</th><th>实际应用</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-avl">AVL 树</span></td>
+        <td>所有节点 |BF| ≤ 1（最严格）</td>
+        <td>O(log n)</td>
+        <td>高度最低，查找最快；插入删除可能触发多次旋转</td>
+        <td>读多写少场景；部分数据库内部索引</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-rb">红黑树</span></td>
+        <td>最长路径 ≤ 最短路径 × 2（近似平衡）</td>
+        <td>O(log n)</td>
+        <td>旋转次数少（最多 3 次），插入删除更快</td>
+        <td>Java TreeMap/TreeSet、C++ std::map、Linux 进程调度</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-treap">Treap</span></td>
+        <td>随机优先级维持期望平衡</td>
+        <td>期望 O(log n)</td>
+        <td>实现最简单；结合 BST + 堆性质</td>
+        <td>竞赛编程、对随机性要求不高的场景</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card" style="margin-top:20px">
+    <h2>选哪个？一句话决策</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:0.88rem">
+      <div style="background:#0f1117;border:1px solid #2b6cb0;border-radius:10px;padding:14px">
+        <p class="blue" style="font-weight:600;margin-bottom:8px">查找性能优先</p>
+        <p style="color:#a0aec0">读操作远多于写 → 选 <strong class="blue">AVL 树</strong></p>
+      </div>
+      <div style="background:#0f1117;border:1px solid #742a2a;border-radius:10px;padding:14px">
+        <p class="red" style="font-weight:600;margin-bottom:8px">插入删除频繁</p>
+        <p style="color:#a0aec0">写操作多 → 选 <strong class="red">红黑树</strong></p>
+      </div>
+      <div style="background:#0f1117;border:1px solid #285e61;border-radius:10px;padding:14px">
+        <p style="color:#b2f5ea;font-weight:600;margin-bottom:8px">快速实现</p>
+        <p style="color:#a0aec0">竞赛/原型 → 选 <strong style="color:#b2f5ea">Treap</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>AVL 旋转概念（维持平衡的手段）</h2>
+    <p>当插入导致某节点 |BF| > 1 时，通过 <span class="highlight">旋转</span> 来恢复平衡，分四种情况：</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;font-size:0.88rem">
+      <div style="background:#0f1117;border-radius:8px;padding:14px">
+        <p class="green" style="font-weight:600">LL 型 → 右旋</p>
+        <p style="color:#a0aec0;margin-top:6px">失衡在左子树的左侧，对失衡节点做一次右旋</p>
+      </div>
+      <div style="background:#0f1117;border-radius:8px;padding:14px">
+        <p class="green" style="font-weight:600">RR 型 → 左旋</p>
+        <p style="color:#a0aec0;margin-top:6px">失衡在右子树的右侧，对失衡节点做一次左旋</p>
+      </div>
+      <div style="background:#0f1117;border-radius:8px;padding:14px">
+        <p class="highlight" style="font-weight:600">LR 型 → 先左旋再右旋</p>
+        <p style="color:#a0aec0;margin-top:6px">失衡在左子树的右侧，需要两次旋转</p>
+      </div>
+      <div style="background:#0f1117;border-radius:8px;padding:14px">
+        <p class="highlight" style="font-weight:600">RL 型 → 先右旋再左旋</p>
+        <p style="color:#a0aec0;margin-top:6px">失衡在右子树的左侧，需要两次旋转</p>
+      </div>
+    </div>
+    <p style="margin-top:14px;color:#a0aec0;font-size:0.88rem">
+      旋转操作只改变节点的父子关系，不改变 BST 的左小右大性质，且时间复杂度为 O(1)。
+    </p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+//  Tab switching
+// ═══════════════════════════════════
+const tabs = document.querySelectorAll('.tab');
+const sections = document.querySelectorAll('.section');
+function switchTab(i) {
+  tabs.forEach((t,j) => t.classList.toggle('active', i===j));
+  sections.forEach((s,j) => s.classList.toggle('active', i===j));
+  if (i === 3) animateBars();
+}
+
+// ═══════════════════════════════════
+//  Complexity bar animation (Tab 3)
+// ═══════════════════════════════════
+let barsAnimated = false;
+function animateBars() {
+  if (barsAnimated) return;
+  barsAnimated = true;
+  setTimeout(() => {
+    document.getElementById('bar-worst').style.width = '100%';
+    document.getElementById('bar-balanced').style.width = '2%';
+    document.getElementById('bar-hash').style.width = '0.3%';
+  }, 100);
+}
+
+// ═══════════════════════════════════
+//  BST for Tab 2
+// ═══════════════════════════════════
+class BSTNode {
+  constructor(val) { this.val = val; this.left = null; this.right = null; }
+}
+let bstRoot = null;
+
+function bstInsert(root, val) {
+  if (!root) return new BSTNode(val);
+  if (val < root.val) root.left  = bstInsert(root.left,  val);
+  else if (val > root.val) root.right = bstInsert(root.right, val);
+  return root;
+}
+
+function height(node) {
+  if (!node) return -1;
+  return 1 + Math.max(height(node.left), height(node.right));
+}
+
+function bf(node) {
+  if (!node) return 0;
+  return height(node.left) - height(node.right);
+}
+
+// Layout: assign (x,y) to each node
+function layout(node, depth, xMin, xMax, positions) {
+  if (!node) return;
+  const x = (xMin + xMax) / 2;
+  const y = 30 + depth * 70;
+  positions.set(node, { x, y });
+  layout(node.left,  depth + 1, xMin, x, positions);
+  layout(node.right, depth + 1, x, xMax, positions);
+}
+
+function renderTree() {
+  const svg = document.getElementById('treeSvg');
+  svg.innerHTML = '';
+  if (!bstRoot) return;
+
+  const W = 800, H = 320;
+  const pos = new Map();
+  layout(bstRoot, 0, 0, W, pos);
+
+  // Draw edges first
+  pos.forEach((p, node) => {
+    if (node.left && pos.has(node.left)) {
+      const c = pos.get(node.left);
+      drawLine(svg, p.x, p.y, c.x, c.y);
+    }
+    if (node.right && pos.has(node.right)) {
+      const c = pos.get(node.right);
+      drawLine(svg, p.x, p.y, c.x, c.y);
+    }
+  });
+
+  // Draw nodes
+  pos.forEach((p, node) => {
+    const b = bf(node);
+    const balanced = Math.abs(b) <= 1;
+    const fill   = balanced ? '#276749' : '#742a2a';
+    const stroke = balanced ? '#68d391' : '#fc8181';
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', p.x); circle.setAttribute('cy', p.y);
+    circle.setAttribute('r', 18);
+    circle.setAttribute('fill', fill);
+    circle.setAttribute('stroke', stroke);
+    circle.setAttribute('stroke-width', 2);
+    svg.appendChild(circle);
+
+    addText(svg, p.x, p.y + 5, String(node.val), 'white', 13, 700);
+    // BF label
+    addText(svg, p.x + 22, p.y - 12, `${b}`, '#f6ad55', 10, 400);
+  });
+}
+
+function drawLine(svg, x1, y1, x2, y2) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+  line.setAttribute('stroke', '#4a5568'); line.setAttribute('stroke-width', 2);
+  svg.appendChild(line);
+}
+
+function addText(svg, x, y, txt, fill, size, weight) {
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('fill', fill);
+  t.setAttribute('font-size', size);
+  t.setAttribute('font-weight', weight);
+  t.textContent = txt;
+  svg.appendChild(t);
+}
+
+function insertNode() {
+  const input = document.getElementById('insertVal');
+  const val = parseInt(input.value);
+  if (isNaN(val) || val < 1 || val > 99) {
+    setLog('请输入 1 到 99 之间的整数。', 'red');
+    return;
+  }
+  bstRoot = bstInsert(bstRoot, val);
+  input.value = '';
+  const h = height(bstRoot);
+  const rootBF = bf(bstRoot);
+  const isBalanced = checkBalanced(bstRoot);
+  const statusColor = isBalanced ? 'green' : 'red';
+  setLog(
+    `插入 ${val} 成功。树高 = ${h}，根节点平衡因子 = ${rootBF}。` +
+    `整棵树${isBalanced ? '<span style="color:#68d391">平衡 ✓</span>' : '<span style="color:#fc8181">失衡 ✗（退化中）</span>'}`,
+    statusColor
+  );
+  renderTree();
+}
+
+function checkBalanced(node) {
+  if (!node) return true;
+  if (Math.abs(bf(node)) > 1) return false;
+  return checkBalanced(node.left) && checkBalanced(node.right);
+}
+
+function resetTree() {
+  bstRoot = null;
+  document.getElementById('treeSvg').innerHTML = '';
+  setLog('树已重置，等待插入第一个节点…', null);
+}
+
+async function presetInsert(arr) {
+  resetTree();
+  for (const v of arr) {
+    bstRoot = bstInsert(bstRoot, v);
+    renderTree();
+    await new Promise(r => setTimeout(r, 500));
+  }
+  const h = height(bstRoot);
+  const isBalanced = checkBalanced(bstRoot);
+  setLog(
+    `插入序列 [${arr.join(', ')}] 完成。树高 = ${h}。` +
+    `整棵树${isBalanced ? '<span style="color:#68d391">平衡 ✓</span>' : '<span style="color:#fc8181">失衡 ✗ — 退化成链表！</span>'}`,
+    null
+  );
+}
+
+function setLog(msg, type) {
+  document.getElementById('log').innerHTML = msg;
+}
+
+// Allow Enter key
+document.getElementById('insertVal').addEventListener('keydown', e => {
+  if (e.key === 'Enter') insertNode();
+});
+</script>
+</body>
+</html>

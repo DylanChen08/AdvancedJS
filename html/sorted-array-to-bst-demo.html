@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>有序数组转换为平衡二叉搜索树演示</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #10141b;
+        color: #f5f7fb;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(99, 212, 139, 0.14), rgba(16, 20, 27, 0) 320px),
+          #10141b;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1450px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 28px 0 36px;
+      }
+
+      .top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 30px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      .summary {
+        max-width: 780px;
+        margin: 0;
+        color: #aeb8c8;
+        line-height: 1.65;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .badge {
+        border: 1px solid #314055;
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: #dbe7f7;
+        background: #18202b;
+        white-space: nowrap;
+      }
+
+      .badge strong {
+        color: #63d48b;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(650px, 1fr) minmax(420px, 0.72fr);
+        gap: 16px;
+      }
+
+      .panel {
+        border: 1px solid #2e3b4f;
+        border-radius: 8px;
+        background: #151b24;
+      }
+
+      .panelHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #2a3546;
+      }
+
+      .panelHeader h2 {
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .inputRow {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 10px;
+        padding: 16px 18px 0;
+      }
+
+      input {
+        min-width: 0;
+        border: 1px solid #3a4657;
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #f5f7fb;
+        background: #10141b;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: #63d48b;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 13px;
+        color: #0f1720;
+        background: #63d48b;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        color: #f5f7fb;
+        background: #243044;
+      }
+
+      button.accent {
+        background: #f6c44f;
+      }
+
+      button:disabled {
+        opacity: 0.52;
+        cursor: not-allowed;
+      }
+
+      .workspace {
+        padding: 18px;
+      }
+
+      .array {
+        display: grid;
+        grid-template-columns: repeat(var(--count), minmax(42px, 1fr));
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .cell {
+        position: relative;
+        min-height: 58px;
+        border: 1px solid #334055;
+        border-radius: 8px;
+        padding: 8px 6px;
+        background: #111923;
+        text-align: center;
+        transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+
+      .cell span {
+        display: block;
+        color: #f5f7fb;
+        font-size: 20px;
+        font-weight: 760;
+        line-height: 1.15;
+      }
+
+      .cell small {
+        color: #79879a;
+        font-size: 12px;
+      }
+
+      .cell.inRange {
+        border-color: #536174;
+        background: #192231;
+      }
+
+      .cell.mid {
+        border-color: #f6c44f;
+        background: #4b3916;
+        transform: translateY(-2px);
+      }
+
+      .cell.done {
+        border-color: #63d48b;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #263244;
+        border-radius: 8px;
+        background: #0f141d;
+      }
+
+      .edge {
+        stroke: #536174;
+        stroke-width: 4;
+        stroke-linecap: round;
+        opacity: 0.9;
+      }
+
+      .node circle {
+        fill: #182231;
+        stroke: #718096;
+        stroke-width: 3;
+        transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease;
+      }
+
+      .node text {
+        fill: #f5f7fb;
+        font-size: 25px;
+        font-weight: 780;
+        text-anchor: middle;
+        dominant-baseline: central;
+      }
+
+      .node.active circle {
+        fill: #4b3916;
+        stroke: #f6c44f;
+        stroke-width: 6;
+      }
+
+      .node.done circle {
+        fill: #143625;
+        stroke: #63d48b;
+        stroke-width: 5;
+      }
+
+      .statusGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .metric {
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 12px;
+        background: #121923;
+      }
+
+      .metric span {
+        display: block;
+        margin-bottom: 6px;
+        color: #8794a7;
+        font-size: 13px;
+      }
+
+      .metric strong {
+        color: #f5f7fb;
+        font-size: 19px;
+      }
+
+      .sideBody {
+        padding: 18px;
+      }
+
+      .callStack {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .call {
+        border: 1px solid #2c3749;
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #aeb8c8;
+        background: #111923;
+      }
+
+      .call.active {
+        border-color: #f6c44f;
+        color: #f5f7fb;
+        background: #2b2417;
+      }
+
+      .call.done {
+        border-color: #345f45;
+        color: #c9f6d7;
+      }
+
+      .explain {
+        min-height: 84px;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 12px;
+        color: #dbe7f7;
+        background: #121923;
+        line-height: 1.62;
+      }
+
+      pre {
+        overflow: auto;
+        margin: 14px 0 0;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 14px;
+        color: #d7e2f2;
+        background: #0f141d;
+        line-height: 1.55;
+        tab-size: 2;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 13px;
+      }
+
+      .keyword {
+        color: #7cc7ff;
+      }
+
+      .number {
+        color: #f6c44f;
+      }
+
+      .comment {
+        color: #7fa16f;
+      }
+
+      @media (max-width: 980px) {
+        .top,
+        .layout {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .badges {
+          justify-content: flex-start;
+        }
+
+        .inputRow {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .app {
+          width: min(100% - 24px, 1450px);
+          padding-top: 18px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .panelHeader {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .array {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .statusGrid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="top">
+        <div>
+          <h1>108. 将有序数组转换为平衡二叉搜索树</h1>
+          <p class="summary">
+            每次从当前有序区间选择中位数作为根节点，再递归构建左、右子树。这个演示使用截图里的策略：偶数长度区间取右中位数。
+          </p>
+        </div>
+        <div class="badges" aria-label="复杂度">
+          <div class="badge">时间 <strong>O(n)</strong></div>
+          <div class="badge">递归栈 <strong>O(log n)</strong></div>
+          <div class="badge">平衡高度 <strong>自动保持</strong></div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panelHeader">
+            <h2>构建过程</h2>
+            <div class="controls">
+              <button id="prevBtn" class="secondary">上一步</button>
+              <button id="nextBtn">下一步</button>
+              <button id="playBtn" class="accent">自动播放</button>
+              <button id="resetBtn" class="secondary">重置</button>
+            </div>
+          </div>
+          <div class="inputRow">
+            <input id="arrayInput" value="-10,-3,0,5,9" aria-label="有序数组" />
+            <button id="buildBtn">生成</button>
+            <button id="sampleBtn" class="secondary">示例</button>
+          </div>
+          <div class="workspace">
+            <div id="arrayView" class="array" aria-label="数组区间"></div>
+            <svg id="treeSvg" viewBox="0 0 880 460" role="img" aria-label="二叉搜索树构建动画"></svg>
+            <div class="statusGrid">
+              <div class="metric">
+                <span>当前区间</span>
+                <strong id="rangeMetric">-</strong>
+              </div>
+              <div class="metric">
+                <span>选择中位数</span>
+                <strong id="midMetric">-</strong>
+              </div>
+              <div class="metric">
+                <span>层序结果</span>
+                <strong id="levelMetric">[]</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <div class="panelHeader">
+            <h2>递归拆分</h2>
+          </div>
+          <div class="sideBody">
+            <div id="callStack" class="callStack"></div>
+            <div id="explain" class="explain"></div>
+            <pre><code><span class="comment">// 右中位数版本，对应截图示例</span>
+<span class="keyword">function</span> sortedArrayToBST(nums) {
+  <span class="keyword">function</span> build(left, right) {
+    <span class="keyword">if</span> (left &gt; right) <span class="keyword">return</span> null;
+
+    <span class="keyword">const</span> mid = Math.ceil((left + right) / <span class="number">2</span>);
+    <span class="keyword">const</span> root = <span class="keyword">new</span> TreeNode(nums[mid]);
+
+    root.left = build(left, mid - <span class="number">1</span>);
+    root.right = build(mid + <span class="number">1</span>, right);
+    <span class="keyword">return</span> root;
+  }
+
+  <span class="keyword">return</span> build(<span class="number">0</span>, nums.length - <span class="number">1</span>);
+}</code></pre>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const arrayInput = document.querySelector("#arrayInput");
+      const arrayView = document.querySelector("#arrayView");
+      const treeSvg = document.querySelector("#treeSvg");
+      const callStack = document.querySelector("#callStack");
+      const explain = document.querySelector("#explain");
+      const rangeMetric = document.querySelector("#rangeMetric");
+      const midMetric = document.querySelector("#midMetric");
+      const levelMetric = document.querySelector("#levelMetric");
+      const prevBtn = document.querySelector("#prevBtn");
+      const nextBtn = document.querySelector("#nextBtn");
+      const playBtn = document.querySelector("#playBtn");
+      const resetBtn = document.querySelector("#resetBtn");
+      const buildBtn = document.querySelector("#buildBtn");
+      const sampleBtn = document.querySelector("#sampleBtn");
+
+      let nums = [];
+      let nodes = [];
+      let steps = [];
+      let stepIndex = 0;
+      let timer = null;
+
+      function parseNums(value) {
+        return value
+          .split(/[,，\s]+/)
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .map(Number);
+      }
+
+      function makeTree(values) {
+        let id = 0;
+        const created = [];
+        const actions = [
+          {
+            type: "start",
+            text: "从完整数组开始，选择中位数作为根节点。",
+            visibleIds: [],
+            doneIds: [],
+          },
+        ];
+
+        function build(left, right, depth, parentId, side) {
+          if (left > right) {
+            actions.push({
+              type: "empty",
+              left,
+              right,
+              parentId,
+              side,
+              text: `区间 [${left}, ${right}] 为空，返回 null。`,
+              visibleIds: created.map((node) => node.id),
+              doneIds: created.map((node) => node.id),
+            });
+            return null;
+          }
+
+          const mid = Math.ceil((left + right) / 2);
+          const node = {
+            id: id++,
+            value: values[mid],
+            index: mid,
+            leftRange: left,
+            rightRange: right,
+            depth,
+            parentId,
+            side,
+            left: null,
+            right: null,
+          };
+          created.push(node);
+          actions.push({
+            type: "create",
+            nodeId: node.id,
+            left,
+            right,
+            mid,
+            text: `处理区间 [${left}, ${right}]，取右中位数 nums[${mid}] = ${values[mid]} 作为${parentId === null ? "根节点" : side === "left" ? "左子树根节点" : "右子树根节点"}。`,
+            visibleIds: created.map((item) => item.id),
+            doneIds: created.filter((item) => item.id !== node.id).map((item) => item.id),
+          });
+
+          node.left = build(left, mid - 1, depth + 1, node.id, "left");
+          node.right = build(mid + 1, right, depth + 1, node.id, "right");
+          return node;
+        }
+
+        const root = build(0, values.length - 1, 0, null, "root");
+        actions.push({
+          type: "done",
+          text: "所有区间处理完成，得到一棵高度平衡的二叉搜索树。",
+          visibleIds: created.map((node) => node.id),
+          doneIds: created.map((node) => node.id),
+        });
+
+        return { root, nodes: created, steps: actions };
+      }
+
+      function getPositions() {
+        const width = 880;
+        const top = 70;
+        const levelGap = 118;
+        const count = Math.max(nums.length, 1);
+        const positions = new Map();
+        nodes.forEach((node) => {
+          positions.set(node.id, {
+            x: ((node.index + 0.5) / count) * (width - 120) + 60,
+            y: top + node.depth * levelGap,
+          });
+        });
+        return positions;
+      }
+
+      function compactLevelOrder(visibleIds) {
+        if (!nodes.length) return "[]";
+        const visible = new Set(visibleIds);
+        const byId = new Map(nodes.map((node) => [node.id, node]));
+        const root = nodes.find((node) => node.parentId === null);
+        if (!root || !visible.has(root.id)) return "[]";
+
+        const result = [];
+        const queue = [root];
+        while (queue.length) {
+          const node = queue.shift();
+          if (!node || !visible.has(node.id)) {
+            result.push(null);
+            continue;
+          }
+
+          result.push(node.value);
+          const left = nodes.find((item) => item.parentId === node.id && item.side === "left");
+          const right = nodes.find((item) => item.parentId === node.id && item.side === "right");
+          if (left || right) {
+            queue.push(left ? byId.get(left.id) : null, right ? byId.get(right.id) : null);
+          }
+        }
+
+        while (result[result.length - 1] === null) result.pop();
+        return `[${result.map((item) => (item === null ? "null" : item)).join(",")}]`;
+      }
+
+      function renderArray(step) {
+        arrayView.style.setProperty("--count", nums.length);
+        arrayView.innerHTML = nums
+          .map((value, index) => {
+            const inRange = step.left !== undefined && index >= step.left && index <= step.right;
+            const isMid = step.mid === index;
+            const done = step.visibleIds?.some((id) => nodes.find((node) => node.id === id && node.index === index));
+            return `<div class="cell ${inRange ? "inRange" : ""} ${isMid ? "mid" : ""} ${done ? "done" : ""}">
+              <span>${value}</span>
+              <small>index ${index}</small>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function renderTree(step) {
+        const visible = new Set(step.visibleIds || []);
+        const done = new Set(step.doneIds || []);
+        const positions = getPositions();
+        const activeId = step.nodeId;
+        const edges = [];
+        const nodeMarkup = [];
+
+        nodes.forEach((node) => {
+          if (!visible.has(node.id) || node.parentId === null || !visible.has(node.parentId)) return;
+          const from = positions.get(node.parentId);
+          const to = positions.get(node.id);
+          edges.push(`<line class="edge" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" />`);
+        });
+
+        nodes.forEach((node) => {
+          if (!visible.has(node.id)) return;
+          const pos = positions.get(node.id);
+          const state = node.id === activeId ? "active" : done.has(node.id) ? "done" : "";
+          nodeMarkup.push(`<g class="node ${state}" transform="translate(${pos.x} ${pos.y})">
+            <circle r="32"></circle>
+            <text>${node.value}</text>
+          </g>`);
+        });
+
+        treeSvg.innerHTML = edges.join("") + nodeMarkup.join("");
+      }
+
+      function renderStack(step) {
+        const calls = steps
+          .filter((item) => item.type === "create")
+          .map((item) => {
+            const active = item === step;
+            const finished = steps.indexOf(item) < stepIndex;
+            return `<div class="call ${active ? "active" : ""} ${finished ? "done" : ""}">
+              build(${item.left}, ${item.right}) -> mid ${item.mid}, value ${nums[item.mid]}
+            </div>`;
+          });
+        callStack.innerHTML = calls.join("") || '<div class="call">等待生成递归调用</div>';
+      }
+
+      function render() {
+        const step = steps[stepIndex] || steps[0];
+        renderArray(step);
+        renderTree(step);
+        renderStack(step);
+        explain.textContent = step.text;
+        rangeMetric.textContent = step.left === undefined ? "-" : `[${step.left}, ${step.right}]`;
+        midMetric.textContent = step.mid === undefined ? "-" : `nums[${step.mid}] = ${nums[step.mid]}`;
+        levelMetric.textContent = compactLevelOrder(step.visibleIds || []);
+        prevBtn.disabled = stepIndex === 0;
+        nextBtn.disabled = stepIndex === steps.length - 1;
+      }
+
+      function rebuild() {
+        stop();
+        const parsed = parseNums(arrayInput.value);
+        if (!parsed.length || parsed.some((value) => Number.isNaN(value))) {
+          explain.textContent = "请输入数字数组，例如：-10,-3,0,5,9";
+          return;
+        }
+        nums = parsed.slice().sort((a, b) => a - b);
+        arrayInput.value = nums.join(",");
+        const model = makeTree(nums);
+        nodes = model.nodes;
+        steps = model.steps;
+        stepIndex = 0;
+        render();
+      }
+
+      function stop() {
+        clearInterval(timer);
+        timer = null;
+        playBtn.textContent = "自动播放";
+      }
+
+      function play() {
+        if (timer) {
+          stop();
+          return;
+        }
+        playBtn.textContent = "暂停";
+        timer = setInterval(() => {
+          if (stepIndex >= steps.length - 1) {
+            stop();
+            return;
+          }
+          stepIndex += 1;
+          render();
+        }, 900);
+      }
+
+      prevBtn.addEventListener("click", () => {
+        stop();
+        stepIndex = Math.max(0, stepIndex - 1);
+        render();
+      });
+
+      nextBtn.addEventListener("click", () => {
+        stop();
+        stepIndex = Math.min(steps.length - 1, stepIndex + 1);
+        render();
+      });
+
+      playBtn.addEventListener("click", play);
+      resetBtn.addEventListener("click", () => {
+        stop();
+        stepIndex = 0;
+        render();
+      });
+      buildBtn.addEventListener("click", rebuild);
+      sampleBtn.addEventListener("click", () => {
+        arrayInput.value = "-10,-3,0,5,9";
+        rebuild();
+      });
+      arrayInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") rebuild();
+      });
+
+      rebuild();
+    </script>
+  </body>
+</html>

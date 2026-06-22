@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>二叉树最近公共祖先 O(n) 演示</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #10141b;
+        color: #f5f7fb;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(41, 151, 255, 0.14), rgba(16, 20, 27, 0) 300px),
+          #10141b;
+      }
+
+      button,
+      select {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1440px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 28px 0 34px;
+      }
+
+      .top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 30px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      .summary {
+        margin: 0;
+        max-width: 760px;
+        color: #aeb8c8;
+        line-height: 1.65;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .badge {
+        border: 1px solid #314055;
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: #dbe7f7;
+        background: #18202b;
+        white-space: nowrap;
+      }
+
+      .badge strong {
+        color: #63d48b;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(620px, 1fr) minmax(420px, 0.78fr);
+        gap: 16px;
+      }
+
+      .panel {
+        border: 1px solid #2e3b4f;
+        border-radius: 8px;
+        background: #151b24;
+      }
+
+      .panelHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #2a3546;
+      }
+
+      .panelHeader h2 {
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #aeb8c8;
+        font-size: 14px;
+      }
+
+      select {
+        min-width: 78px;
+        border: 1px solid #3a4657;
+        border-radius: 8px;
+        padding: 8px 28px 8px 10px;
+        color: #f5f7fb;
+        background: #10141b;
+        outline: none;
+      }
+
+      select:focus {
+        border-color: #58a6ff;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: #0f1720;
+        background: #f6c44f;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        color: #f5f7fb;
+        background: #243044;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .treeWrap {
+        padding: 18px;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #263244;
+        border-radius: 8px;
+        background: #0f141d;
+      }
+
+      .edge {
+        stroke: #536174;
+        stroke-width: 4;
+        stroke-linecap: round;
+      }
+
+      .node circle {
+        fill: #182231;
+        stroke: #718096;
+        stroke-width: 3;
+        transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease;
+      }
+
+      .node text {
+        fill: #f5f7fb;
+        font-size: 26px;
+        font-weight: 760;
+        text-anchor: middle;
+        dominant-baseline: central;
+        pointer-events: none;
+      }
+
+      .node.visited circle {
+        fill: #223047;
+        stroke: #8aa0bc;
+      }
+
+      .node.current circle {
+        fill: #4f3c16;
+        stroke: #f6c44f;
+        stroke-width: 5;
+      }
+
+      .node.target circle {
+        fill: #132c48;
+        stroke: #58a6ff;
+        stroke-width: 5;
+      }
+
+      .node.returned circle {
+        fill: #143625;
+        stroke: #63d48b;
+        stroke-width: 5;
+      }
+
+      .node.answer circle {
+        fill: #3d1f25;
+        stroke: #ff6b6b;
+        stroke-width: 6;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+        color: #aeb8c8;
+        font-size: 14px;
+      }
+
+      .legendItem {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #718096;
+      }
+
+      .swatch.current {
+        background: #f6c44f;
+      }
+
+      .swatch.target {
+        background: #58a6ff;
+      }
+
+      .swatch.returned {
+        background: #63d48b;
+      }
+
+      .swatch.answer {
+        background: #ff6b6b;
+      }
+
+      .resultGrid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .metric {
+        min-height: 78px;
+        border: 1px solid #2a3546;
+        border-radius: 8px;
+        padding: 13px;
+        background: #121923;
+      }
+
+      .metric span {
+        display: block;
+        color: #aeb8c8;
+        font-size: 13px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 24px;
+      }
+
+      .side {
+        display: grid;
+        gap: 16px;
+      }
+
+      pre {
+        margin: 0;
+        overflow: auto;
+        padding: 16px 18px 18px;
+        color: #d7e3f4;
+        background: #0f141d;
+        border-radius: 0 0 8px 8px;
+        font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      .codeKeyword {
+        color: #58a6ff;
+      }
+
+      .codeComment {
+        color: #6f7d91;
+      }
+
+      .trace {
+        max-height: 330px;
+        overflow: auto;
+        padding: 14px 18px 18px;
+      }
+
+      .traceItem {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid #273244;
+        color: #cbd5e1;
+      }
+
+      .traceItem:last-child {
+        border-bottom: 0;
+      }
+
+      .traceItem.active {
+        color: #fff;
+      }
+
+      .stepNo {
+        color: #7e8da2;
+      }
+
+      .note {
+        padding: 16px 18px 18px;
+        color: #aeb8c8;
+        line-height: 1.65;
+      }
+
+      .note strong {
+        color: #f5f7fb;
+      }
+
+      .quickCases {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0 18px 18px;
+      }
+
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .top {
+          flex-direction: column;
+        }
+
+        .badges {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="top">
+        <div>
+          <h1>二叉树最近公共祖先：单次 DFS 演示</h1>
+          <p class="summary">
+            题目对应截图中的 LeetCode 236。任意二叉树不具备二叉搜索树的有序性质，因此最稳的做法是一次后序 DFS：
+            左子树找一次、右子树找一次，如果两边都找到了目标，当前节点就是最近公共祖先。
+          </p>
+        </div>
+        <div class="badges" aria-label="复杂度">
+          <div class="badge">时间复杂度 <strong>O(n)</strong></div>
+          <div class="badge">额外空间 <strong>O(h)</strong></div>
+          <div class="badge">节点最多访问 <strong>1 次</strong></div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <section class="panel">
+          <div class="panelHeader">
+            <h2>示例树 root = [3,5,1,6,2,0,8,null,null,7,4]</h2>
+            <div class="controls">
+              <label>
+                p
+                <select id="pSelect"></select>
+              </label>
+              <label>
+                q
+                <select id="qSelect"></select>
+              </label>
+              <button id="runBtn" type="button">运行到结束</button>
+              <button id="stepBtn" type="button" class="secondary">下一步</button>
+              <button id="resetBtn" type="button" class="secondary">重置</button>
+            </div>
+          </div>
+
+          <div class="treeWrap">
+            <svg id="treeSvg" viewBox="0 0 720 470" role="img" aria-label="二叉树最近公共祖先演示图"></svg>
+            <div class="legend">
+              <span class="legendItem"><i class="swatch current"></i> 当前访问</span>
+              <span class="legendItem"><i class="swatch target"></i> p 或 q</span>
+              <span class="legendItem"><i class="swatch returned"></i> 向上返回目标</span>
+              <span class="legendItem"><i class="swatch answer"></i> 最终答案</span>
+            </div>
+
+            <div class="resultGrid">
+              <div class="metric">
+                <span>当前 p</span>
+                <strong id="pMetric">5</strong>
+              </div>
+              <div class="metric">
+                <span>当前 q</span>
+                <strong id="qMetric">1</strong>
+              </div>
+              <div class="metric">
+                <span>访问节点数</span>
+                <strong id="visitMetric">0</strong>
+              </div>
+              <div class="metric">
+                <span>最近公共祖先</span>
+                <strong id="answerMetric">--</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>时间复杂度优先的核心代码</h2>
+            </div>
+            <pre><code><span class="codeComment">// 题目保证 p、q 都在树中。每个节点最多进入一次。</span>
+<span class="codeKeyword">function</span> lowestCommonAncestor(root, p, q) {
+  <span class="codeKeyword">if</span> (root === null || root === p || root === q) {
+    <span class="codeKeyword">return</span> root;
+  }
+
+  <span class="codeKeyword">const</span> left = lowestCommonAncestor(root.left, p, q);
+  <span class="codeKeyword">const</span> right = lowestCommonAncestor(root.right, p, q);
+
+  <span class="codeKeyword">if</span> (left !== null && right !== null) {
+    <span class="codeKeyword">return</span> root;
+  }
+
+  <span class="codeKeyword">return</span> left !== null ? left : right;
+}</code></pre>
+          </section>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>执行记录</h2>
+            </div>
+            <div id="trace" class="trace"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <h2>快速用例</h2>
+            </div>
+            <div class="note">
+              <strong>为什么是 O(n)：</strong> 这个算法不反复从根节点查路径，不为每个节点二次搜索。
+              DFS 对每个节点只处理常数次，所以最坏情况下访问 n 个节点，时间复杂度为 O(n)。
+            </div>
+            <div class="quickCases">
+              <button type="button" class="secondary" data-case="5,1">p=5, q=1</button>
+              <button type="button" class="secondary" data-case="5,4">p=5, q=4</button>
+              <button type="button" class="secondary" data-case="6,4">p=6, q=4</button>
+              <button type="button" class="secondary" data-case="7,8">p=7, q=8</button>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const nodeData = [
+        { val: 3, x: 360, y: 60, left: 5, right: 1 },
+        { val: 5, x: 210, y: 160, left: 6, right: 2 },
+        { val: 1, x: 510, y: 160, left: 0, right: 8 },
+        { val: 6, x: 120, y: 270, left: null, right: null },
+        { val: 2, x: 300, y: 270, left: 7, right: 4 },
+        { val: 0, x: 450, y: 270, left: null, right: null },
+        { val: 8, x: 600, y: 270, left: null, right: null },
+        { val: 7, x: 240, y: 390, left: null, right: null },
+        { val: 4, x: 360, y: 390, left: null, right: null }
+      ];
+
+      const nodes = new Map(nodeData.map((node) => [node.val, node]));
+      const svg = document.getElementById("treeSvg");
+      const pSelect = document.getElementById("pSelect");
+      const qSelect = document.getElementById("qSelect");
+      const runBtn = document.getElementById("runBtn");
+      const stepBtn = document.getElementById("stepBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const traceEl = document.getElementById("trace");
+      const pMetric = document.getElementById("pMetric");
+      const qMetric = document.getElementById("qMetric");
+      const visitMetric = document.getElementById("visitMetric");
+      const answerMetric = document.getElementById("answerMetric");
+
+      let trace = [];
+      let stepIndex = -1;
+      let runTimer = null;
+
+      function createOptions(select, selected) {
+        select.innerHTML = "";
+        for (const node of nodeData) {
+          const option = document.createElement("option");
+          option.value = String(node.val);
+          option.textContent = String(node.val);
+          option.selected = node.val === selected;
+          select.appendChild(option);
+        }
+      }
+
+      function childNode(node, side) {
+        const val = node[side];
+        return val === null ? null : nodes.get(val);
+      }
+
+      function drawTree() {
+        svg.innerHTML = "";
+
+        for (const node of nodeData) {
+          for (const side of ["left", "right"]) {
+            const child = childNode(node, side);
+            if (!child) continue;
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("class", "edge");
+            line.setAttribute("x1", String(node.x));
+            line.setAttribute("y1", String(node.y + 32));
+            line.setAttribute("x2", String(child.x));
+            line.setAttribute("y2", String(child.y - 32));
+            svg.appendChild(line);
+          }
+        }
+
+        for (const node of nodeData) {
+          const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          group.setAttribute("class", "node");
+          group.setAttribute("data-val", String(node.val));
+
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", String(node.x));
+          circle.setAttribute("cy", String(node.y));
+          circle.setAttribute("r", "34");
+
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", String(node.x));
+          text.setAttribute("y", String(node.y + 1));
+          text.textContent = String(node.val);
+
+          group.append(circle, text);
+          svg.appendChild(group);
+        }
+      }
+
+      function addTrace(type, node, message, extra = {}) {
+        trace.push({
+          type,
+          node: node ? node.val : null,
+          message,
+          ...extra
+        });
+      }
+
+      function buildTrace() {
+        trace = [];
+        const p = Number(pSelect.value);
+        const q = Number(qSelect.value);
+        let visitCount = 0;
+
+        function dfs(node, depth = 0) {
+          if (node === null) {
+            return null;
+          }
+
+          visitCount += 1;
+          addTrace("visit", node, `访问节点 ${node.val}`, { depth, visitCount });
+
+          if (node.val === p || node.val === q) {
+            addTrace("match", node, `节点 ${node.val} 是目标节点，直接向上返回`, { depth, visitCount, returns: node.val });
+            return node;
+          }
+
+          const left = dfs(childNode(node, "left"), depth + 1);
+          const right = dfs(childNode(node, "right"), depth + 1);
+
+          let result = null;
+          if (left !== null && right !== null) {
+            result = node;
+            addTrace("answer", node, `左右子树分别找到 p 和 q，答案是节点 ${node.val}`, {
+              depth,
+              visitCount,
+              returns: node.val,
+              answer: node.val
+            });
+          } else {
+            result = left !== null ? left : right;
+            addTrace("return", node, `节点 ${node.val} 返回 ${result ? result.val : "null"}`, {
+              depth,
+              visitCount,
+              returns: result ? result.val : null
+            });
+          }
+
+          return result;
+        }
+
+        const answer = dfs(nodes.get(3));
+        addTrace("done", answer, `遍历结束，最近公共祖先是 ${answer ? answer.val : "null"}`, {
+          visitCount,
+          answer: answer ? answer.val : null
+        });
+      }
+
+      function resetState() {
+        clearInterval(runTimer);
+        runTimer = null;
+        stepIndex = -1;
+        buildTrace();
+        renderStep();
+      }
+
+      function classesForNode(nodeVal, activeStep) {
+        const p = Number(pSelect.value);
+        const q = Number(qSelect.value);
+        const classes = ["node"];
+
+        if (nodeVal === p || nodeVal === q) classes.push("target");
+
+        for (let i = 0; i <= stepIndex; i += 1) {
+          const item = trace[i];
+          if (!item) continue;
+          if (item.node === nodeVal && item.type === "visit") classes.push("visited");
+          if (item.returns === nodeVal) classes.push("returned");
+          if (item.answer === nodeVal || (item.type === "done" && item.answer === nodeVal)) classes.push("answer");
+        }
+
+        if (activeStep && activeStep.node === nodeVal && activeStep.type !== "done") classes.push("current");
+        return Array.from(new Set(classes)).join(" ");
+      }
+
+      function renderStep() {
+        const activeStep = trace[stepIndex] || null;
+        const p = Number(pSelect.value);
+        const q = Number(qSelect.value);
+        const answer = trace.slice(0, stepIndex + 1).findLast((item) => item.answer)?.answer;
+        const visitCount = activeStep?.visitCount || 0;
+
+        pMetric.textContent = String(p);
+        qMetric.textContent = String(q);
+        visitMetric.textContent = String(visitCount);
+        answerMetric.textContent = answer === undefined || answer === null ? "--" : String(answer);
+
+        for (const group of svg.querySelectorAll(".node")) {
+          const nodeVal = Number(group.dataset.val);
+          group.setAttribute("class", classesForNode(nodeVal, activeStep));
+        }
+
+        traceEl.innerHTML = "";
+        const visibleTrace = trace.slice(0, Math.max(stepIndex + 1, 0));
+        if (visibleTrace.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "traceItem active";
+          empty.innerHTML = '<span class="stepNo">准备</span><span>点击“下一步”或“运行到结束”开始 DFS。</span>';
+          traceEl.appendChild(empty);
+          return;
+        }
+
+        visibleTrace.forEach((item, index) => {
+          const row = document.createElement("div");
+          row.className = `traceItem ${index === stepIndex ? "active" : ""}`;
+          row.innerHTML = `<span class="stepNo">#${index + 1}</span><span>${item.message}</span>`;
+          traceEl.appendChild(row);
+        });
+
+        traceEl.scrollTop = traceEl.scrollHeight;
+      }
+
+      function nextStep() {
+        if (stepIndex < trace.length - 1) {
+          stepIndex += 1;
+          renderStep();
+        } else {
+          clearInterval(runTimer);
+          runTimer = null;
+        }
+      }
+
+      function runToEnd() {
+        clearInterval(runTimer);
+        runTimer = setInterval(() => {
+          nextStep();
+          if (stepIndex >= trace.length - 1) {
+            clearInterval(runTimer);
+            runTimer = null;
+          }
+        }, 420);
+      }
+
+      function setCase(p, q) {
+        pSelect.value = String(p);
+        qSelect.value = String(q);
+        resetState();
+      }
+
+      createOptions(pSelect, 5);
+      createOptions(qSelect, 1);
+      drawTree();
+      resetState();
+
+      pSelect.addEventListener("change", resetState);
+      qSelect.addEventListener("change", resetState);
+      runBtn.addEventListener("click", runToEnd);
+      stepBtn.addEventListener("click", nextStep);
+      resetBtn.addEventListener("click", resetState);
+
+      document.querySelectorAll("[data-case]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const [p, q] = button.dataset.case.split(",").map(Number);
+          setCase(p, q);
+        });
+      });
+    </script>
+  </body>
+</html>
